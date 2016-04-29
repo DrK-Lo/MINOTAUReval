@@ -1,0 +1,52 @@
+---
+title: "Testing Multivariate packages in R"
+author: "Katie Lotterhos"
+date: "March 31, 2016"
+output: html_document
+---
+
+### Package ccaPP
+
+* Alfons et al 2016. Robust Maximum Association Between Data Sets
+* An intuitive measure of association between two multivariate data sets can be defined as the maximal value that a bivariate association measure between any one-dimensional projections of each data set can attain
+* Suppose that the data sets X and Y consist of p and q variables, respectively. A measure of multivariate association between X and Y can be defined by looking for linear combinations Xα and Y β having maximal association. 
+* It turns out that the Spearman and Kendall rank correlation yield maximum association estimators with good robustness properties and good efficiency.
+* Note that using the Pearson correlation as the projection index of the maximum associa- tion estimator corresponds to the first step of canonical correlation analysis 
+```{r}
+install.packages("ccaPP")
+library(ccaPP)
+data("diabetes")
+str(diabetes)
+x <- diabetes$x
+y <- diabetes$y
+head(x)
+head(y)
+# Component x consists of p = 2 variables measuring relative weight and fasting plasma glucose, while component y consists of q = 3 variables measuring glucose intolerance, insulin response to oral glucose and insulin resistance. It is of medical interest to establish a relation between the two data sets.
+spearman <- maxCorGrid(x, y, method="spearman")
+spearman$a
+spearman$b
+#estimated weighing vectors
+#To assess the significance of maximum association estimates, permutation tests can be per- formed with the function permTest(). On machines with multiple processor cores, only the argument nCores needs to be set to take advantage of parallel computing in order to reduce computation time. If nCores is set to NA, all available processor cores are used.
+permTest(x, y, method="spearman", nCores = 2, seed = 2014)
+
+```
+
+### Outlier detection for high-dimensional data
+
+* Ro et al. 2015. Outlier detection for high-dimensional data. Biometricka 102, 3.
+* For high- dimensional data, classical methods based on the Mahalanobis distance are usually not applicable. We propose an outlier detection procedure that replaces the classical minimum covariance determinant estimator with a high-breakdown minimum diagonal product estimator. 
+* assumes independent and identically distributed $p$-dimensional random vectors of length $n$
+* In robust statistics, estimation of the multivariate location (mean) and covariance matrix􏰀 is challenging, as many classical methods break down in the presence of $n/(p + 1)$ outliers.
+```{r}
+n <- 10^c(3,4,5,6,7,8)
+a <- function(p){n/(p+1)}
+breakdown <- sapply(X=1:10,FUN=a)
+round(breakdown,0)
+library(fields)
+image.plot(log(n,10), 1:10, log(breakdown,10))
+## plot as percentage of outliers
+par(mar=c(4,4,1,1))
+plot(1:20, 1/(1:20+1), xlab="Number of variables", ylab="Percent of outliers in data", bty="n", ylim=c(0,1), pch=20)
+abline(0.1,0, col="grey")
+abline(0.05,0, col="grey")
+```

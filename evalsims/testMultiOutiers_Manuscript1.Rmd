@@ -204,25 +204,25 @@ makeplot <- function(dfv2.out){
    par(mfrow=c(2,2), mar=c(3,4,1,1), bty="l")
     plot(ind, log(dfv2.out$Md), col=col, pch=pch, ylab= "log(Mahalanobis)", cex=cex)
       abline(sort(log(dfv2.out$Md[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,max(log(dfv2.out$Md), na.rm=TRUE)*0.95, "A", cex=2)
-      text(20,max(log(dfv2.out$Md), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
+      text(5,max(log(dfv2.out$Md), na.rm=TRUE)*0.95, "A", cex=2)
+      text(30,max(log(dfv2.out$Md), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
       legend(125, mean(log(dfv2.out$Md), na.rm=TRUE), legend=c("Neutral", "s = 0.005", "s=0.01", "s=0.1"),
              pch=c(19, 17, 17,17), col=c("grey",  "#9ad0f3", "#0072B2", "#D55E00"))
 
     plot(ind, log(dfv2.out$Hd), col=col, pch=pch, ylab= "log(Harmonic mean dist.)", cex=cex)
       abline(sort(log(dfv2.out$Hd[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95, "B", cex=2)
-      text(20,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Hd,dfv2.out$s_high==0),2))
+      text(5,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95, "B", cex=2)
+      text(30,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Hd,dfv2.out$s_high==0),2))
 
     plot(ind, log(dfv2.out$Kd), col=col, pch=pch, ylab= "log(Kernel density)", cex=cex)
       abline(sort(log(dfv2.out$Kd[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95, "C", cex=2)
-      text(20,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Kd,dfv2.out$s_high==0),2))
+      text(5,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95, "C", cex=2)
+      text(30,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Kd,dfv2.out$s_high==0),2))
 
     plot(ind, log(dfv2.out$Nd), col=col, pch=pch, ylab= "log(Nearest neighbor)", cex=cex)
       abline(sort(log(dfv2.out$Nd[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95, "D", cex=2)
-      text(20,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Nd,dfv2.out$s_high==0),2))
+      text(5,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95, "D", cex=2)
+      text(30,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Nd,dfv2.out$s_high==0),2))
 }#end funciton
 
 makeplot(dfv2.out)
@@ -231,92 +231,3 @@ makeplot(dfv4.out)
 
 ```
 
-
-### Plot Two Ref example Correcting for COVariances
-
-```{r}
- # png("figures_man1/TwoRef_log_cov.png", width=10, height=8, res=450, units="in")
-   par(mfrow=c(2,2), mar=c(3,4,1,1), bty="l")
-    plot(ind, log(dfv2.out$Md), col=col, pch=pch, ylab= "log(Mahalanobis)", cex=cex)
-      abline(sort(log(dfv2.out$Md[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,3, "A", cex=2)
-      text(20,3,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
-      legend(125, 0, legend=c("Neutral", "s = 0.005", "s=0.01", "s=0.1"),
-             pch=c(19, 17, 17,17), col=c("grey",  "#9ad0f3", "#0072B2", "#D55E00"))
-
-    plot(ind, log(dfv2.out$Hd_cov), col=col, pch=pch, ylab= "log(Harmonic mean dist.)", cex=cex)
-      abline(sort(log(dfv2.out$Hd_cov[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,3.1, "B", cex=2)
-      text(20,3.1,round(getEmpPower(dfv2.out$Hd_cov,dfv2.out$s_high==0),2))
-
-    plot(ind, log(dfv2.out$Kd_cov), col=col, pch=pch, ylab= "log(Kernel density)", cex=cex)
-      abline(sort(log(dfv2.out$Kd_cov[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,6, "C", cex=2)
-      text(20,6,round(getEmpPower(dfv2.out$Kd_cov,dfv2.out$s_high==0),2))
-
-    plot(ind, log(dfv2.out$Nd_cov), col=col, pch=pch, ylab= "log(Nearest neighbor)", cex=cex)
-      abline(sort(log(dfv2.out$Nd_cov[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,1.5, "D", cex=2)
-      text(20,1.5,round(getEmpPower(dfv2.out$Nd_cov,dfv2.out$s_high==0),2))
-
-#  dev.off()
-
-```
-
-From the above example, you can see that the covariance correction actually makes things alot WORSE, especially for the harmonicDist.  Why does this happen?  Because the selected loci, although only < 1% of the dataset, bias the estimation of the covariance among the univariate statistics.
-
-#### Compare covariance of all data to just neutral data
-
-```{r}
-
-```
-
-#### Test the power of the neutral covariance matrix
-
-```{r}
-  #test power of neutral covariance
-    S_inv <- solve(Sneut)
-    df.vars <- as.matrix(dfv[!is.na(rowSums(dfv[,colnums])),colnums,drop=FALSE])
-    n <- nrow(df.vars)
-    d <- ncol(df.vars)
-     distances <- C_harmonicDist2(split(t(df.vars),1:d), split(S_inv,1:d))$distance
-    par(mfrow=c(1,1))
-    plot(ind[-1], log(distances), col=col, cex=cex, pch=pch)
-    abline(sort(log(distances[dfv2.out$s==0]))[9900*0.999],0)
-    text(20,3.1,round(getEmpPower(distances,(dfv2.out$s_high==0)[-1]),2))
-
-```
-
-The above result illustrates that if the covariance was representative of neutral loci, power could be increased substantially for the tests.  To explore this idea, I used the function CovNAMcd from the rrcovNA package.  It computes a robust multivariate location and scatter estimate with a high breakdown point for incomplete data, using the ‘Fast MCD’ (Minimum Covariance Determinant) estimator. This could also be beneficial for datasets with a lot of NAs.
-
-
-It is interesting how the robust covariance is not affected at all by the selected loci in the dataset!  How does this apply to our multivariate outlier approach:
-
-```{r}
-   S_inv <- solve(S_mcd@cov)
-    df.vars <- as.matrix(dfv[!is.na(rowSums(dfv[,colnums])),colnums,drop=FALSE])
-    n <- nrow(df.vars)
-    d <- ncol(df.vars)
-     distances <- C_harmonicDist2(split(t(df.vars),1:d), split(S_inv,1:d))$distance
-    par(mfrow=c(1,1))
-    plot(ind[-1], log(distances), col=col, cex=cex, pch=pch)
-    abline(sort(log(distances[dfv2.out$s==0]))[9900*0.999],0)
-    text(20,4.1,round(getEmpPower(distances,(dfv2.out$s_high==0)[-1]),2))
-```
-
-The robust covariance is still not as good as ignoring the covariance all together, and just using the variance calculation... but it will be interesting to see for other statistics.  For Mahalanobis:
-
-```{r}
-  diff <- df.vars
-  for (i in 1:ncol(df.vars)) {
-    diff[,i] <- diff[,i] - mean(diff[,i], na.rm=TRUE)
-  }
-  distances2 <- sqrt( rowSums((diff %*% solve(S_mcd@cov))*diff) )
-
-plot(ind[-1], log(distances2), col=col, cex=cex, pch=pch)
-    abline(sort(log(distances2[dfv2.out$s==0]))[9900*0.999],0)
-    text(20,4.1,round(getEmpPower(distances2,(dfv2.out$s_high==0)[-1]),2))
-
-```
-
-So it improves things quite a bit for Mahalonobis!
