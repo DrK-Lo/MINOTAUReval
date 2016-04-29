@@ -58,7 +58,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
 
   writeLines("Calculating outlierliness based on harmonic mean of euclidean distance correcting for covariances...")
     x<- system.time({
-      tx <- try(Hd_var <- harmonicDist(dfv2,S=S))
+      tx <- try(Hd <- harmonicDist(dfv2,S=S))
       if("try-error" %in% class(tx)){
         Hd <- NA}
       })
@@ -74,7 +74,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
       bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]]
       Kd <- kernelDist(dfv2, bandwidth = bw.best)
       })
-     if("try-error" %in% class(tx)){Kd_var <- NA}
+     if("try-error" %in% class(tx)){Kd <- NA}
     })
     print(x)
   

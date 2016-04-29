@@ -8,11 +8,11 @@ output: html_document
 ```{r}
 getwd() 
 #
-#setwd("/Users/katie/Desktop/MINOTAUReval/")
-source("distanceFunctionsOther.R")
+setwd("/Users/katie/Desktop/MINOTAUReval/")
+source("evalsims/distanceFunctionsOther.R")
 #source("misc/evalsims/ComparePlot.R")
-source("GetAllMultiStats.R")
-source("getEmpiricalP2.R")
+source("evalsims/Getdf.R")
+source("evalsims/getEmpiricalP2.R")
 library(qvalue)
 #install.packages("devtools", dependencies=TRUE)
 #install.packages("rrcovNA")
@@ -98,17 +98,54 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
 
   table(dfv$s_high)
   names(dfv)[colnums]
+```
+
+#### Get the covariance using all data (default)
+```{r}
   dfv2.out <- Getdf(dfv, colnums)
 
   dim(dfv)
   dim(dfv2.out)
   head(dfv2.out)
-  dfv3.out <- dfv2.out[,-c(12:13, 15, 17, 19)]
+  dfv3.out <- dfv2.out[,-c(12:13)]
   head(dfv3.out)
- #write.table(dfv3.out, "../data/TwoRefSimForShiny.txt",row.names=FALSE)
-
+ 
   head(dfv3.out)
 ```
+
+#### Compare CovNAMcd to covariance using all data
+```{r}
+  # Covariance matrix of all data
+    S <- cov(dfv[!is.na(rowSums(dfv[,colnums])),colnums])
+    S
+    solve(S)
+  # Covariance of neutral loci
+    Sneut <- cov(dfv[dfv$s_high==0,colnums])
+    Sneut
+    solve(Sneut)
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+  plot(log(abs(Sneut)), log(abs(S))); abline(0,1)
+
+  S_mcd <- CovNAMcd(dfv[,colnums])
+  S_mcd
+  Sneut_mcd <- CovNAMcd(dfv[dfv$s_high==0,colnums])
+  Sneut_mcd 
+  str(S_mcd@cov)
+
+# Compare cov of neutral data to cov_mcd of all data
+  plot(log(abs(Sneut)), log(abs(S_mcd@cov))); abline(0,1)
+
+# Compare cov_mcd of all data to cov_mcd of neutral data
+  plot(log(abs(Sneut_mcd@cov)), log(abs(S_mcd@cov))); abline(0,1)
+
+  dfv4.out <- Getdf(dfv, colnums, S=S_mcd@cov)
+  head(dfv4.out)
+  dfv5.out <- dfv4.out[,-c(12:13)]
+#write.table(dfv5.out, "data/TwoRefSimForShinyM.txt",row.names=FALSE)
+
+
+```
+
 
 ### Set color levels for plotting
 ```{r}
@@ -160,33 +197,38 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
   plot_TwoRefUnivarDist()  
 ```
 
-### Plot Two Ref example Correcting for Variances ####
+### Plot Two Ref example default covariance ####
 ```{r}
 #png("figures_man1/TwoRef_log_var.png", width=10, height=8, res=450, units="in")
+makeplot <- function(dfv2.out){
    par(mfrow=c(2,2), mar=c(3,4,1,1), bty="l")
     plot(ind, log(dfv2.out$Md), col=col, pch=pch, ylab= "log(Mahalanobis)", cex=cex)
       abline(sort(log(dfv2.out$Md[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,3, "A", cex=2)
-      text(20,3,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
-      legend(125, 0, legend=c("Neutral", "s = 0.005", "s=0.01", "s=0.1"),
+      text(0,max(log(dfv2.out$Md), na.rm=TRUE)*0.95, "A", cex=2)
+      text(20,max(log(dfv2.out$Md), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
+      legend(125, mean(log(dfv2.out$Md), na.rm=TRUE), legend=c("Neutral", "s = 0.005", "s=0.01", "s=0.1"),
              pch=c(19, 17, 17,17), col=c("grey",  "#9ad0f3", "#0072B2", "#D55E00"))
 
-    plot(ind, log(dfv2.out$Hd_var), col=col, pch=pch, ylab= "log(Harmonic mean dist.)", cex=cex)
-      abline(sort(log(dfv2.out$Hd_var[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,3.1, "B", cex=2)
-      text(20,3.1,round(getEmpPower(dfv2.out$Hd_var,dfv2.out$s_high==0),2))
+    plot(ind, log(dfv2.out$Hd), col=col, pch=pch, ylab= "log(Harmonic mean dist.)", cex=cex)
+      abline(sort(log(dfv2.out$Hd[dfv2.out$s==0]))[9900*0.999],0)
+      text(0,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95, "B", cex=2)
+      text(20,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Hd,dfv2.out$s_high==0),2))
 
-    plot(ind, log(dfv2.out$Kd_var), col=col, pch=pch, ylab= "log(Kernel density)", cex=cex)
-      abline(sort(log(dfv2.out$Kd_var[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,6, "C", cex=2)
-      text(20,6,round(getEmpPower(dfv2.out$Kd_var,dfv2.out$s_high==0),2))
+    plot(ind, log(dfv2.out$Kd), col=col, pch=pch, ylab= "log(Kernel density)", cex=cex)
+      abline(sort(log(dfv2.out$Kd[dfv2.out$s==0]))[9900*0.999],0)
+      text(0,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95, "C", cex=2)
+      text(20,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Kd,dfv2.out$s_high==0),2))
 
-    plot(ind, log(dfv2.out$Nd_var), col=col, pch=pch, ylab= "log(Nearest neighbor)", cex=cex)
-      abline(sort(log(dfv2.out$Nd_var[dfv2.out$s==0]))[9900*0.999],0)
-      text(0,1.5, "D", cex=2)
-      text(20,1.5,round(getEmpPower(dfv2.out$Nd_var,dfv2.out$s_high==0),2))
+    plot(ind, log(dfv2.out$Nd), col=col, pch=pch, ylab= "log(Nearest neighbor)", cex=cex)
+      abline(sort(log(dfv2.out$Nd[dfv2.out$s==0]))[9900*0.999],0)
+      text(0,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95, "D", cex=2)
+      text(20,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Nd,dfv2.out$s_high==0),2))
+}#end funciton
 
-#  dev.off()
+makeplot(dfv2.out)
+quartz()
+makeplot(dfv4.out)
+
 ```
 
 
@@ -216,8 +258,8 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
       abline(sort(log(dfv2.out$Nd_cov[dfv2.out$s==0]))[9900*0.999],0)
       text(0,1.5, "D", cex=2)
       text(20,1.5,round(getEmpPower(dfv2.out$Nd_cov,dfv2.out$s_high==0),2))
-}
-  dev.off()
+
+#  dev.off()
 
 ```
 
@@ -226,16 +268,7 @@ From the above example, you can see that the covariance correction actually make
 #### Compare covariance of all data to just neutral data
 
 ```{r}
-  # Covariance matrix of all data
-    S <- cov(dfv[!is.na(rowSums(dfv[,colnums])),colnums])
-    S
-    solve(S)
-  # Covariance of neutral loci
-    Sneut <- cov(dfv[dfv$s_high==0,colnums])
-    Sneut
-    solve(Sneut)
-  par(mfrow=c(1,1), mar=c(4,4,1,1))
-  plot(log(Sneut), log(S)); abline(0,1)
+
 ```
 
 #### Test the power of the neutral covariance matrix
@@ -256,20 +289,6 @@ From the above example, you can see that the covariance correction actually make
 
 The above result illustrates that if the covariance was representative of neutral loci, power could be increased substantially for the tests.  To explore this idea, I used the function CovNAMcd from the rrcovNA package.  It computes a robust multivariate location and scatter estimate with a high breakdown point for incomplete data, using the ‘Fast MCD’ (Minimum Covariance Determinant) estimator. This could also be beneficial for datasets with a lot of NAs.
 
-#### Compare CovNAMcd to 
-```{r}
-  S_mcd <- CovNAMcd(dfv[,colnums])
-  S_mcd
-  Sneut_mcd <- CovNAMcd(dfv[dfv$s_high==0,colnums])
-  Sneut_mcd 
-  str(S_mcd@cov)
-
-# Compare cov of neutral data to cov_mcd of all data
-  plot(log(Sneut), log(S_mcd@cov)); abline(0,1)
-
-# Compare cov_mcd of all data to cov_mcd of neutral data
-  plot(log(Sneut_mcd@cov), log(S_mcd@cov)); abline(0,1)
-```
 
 It is interesting how the robust covariance is not affected at all by the selected loci in the dataset!  How does this apply to our multivariate outlier approach:
 

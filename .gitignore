@@ -1,5 +1,6 @@
 *.DS_Store
 *.Rhistory
 *.png
-*.html
+*html*
 evalsims_old/*
+evalsims*html*.png
