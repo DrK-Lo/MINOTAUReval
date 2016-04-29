@@ -11,7 +11,7 @@
 # colnums <- c(10,11,12,15)
 #source("misc/evalsims/distanceFunctionsOther.R")
 
-Getdf <- function(dfv, colnums=1:ncol(dfv)){
+Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
   ### Check for duplicated rows and abort
   if (any(duplicated(dfv))) {
     writeLines("Error: Your data frame has duplicated rows")
@@ -50,78 +50,48 @@ Getdf <- function(dfv, colnums=1:ncol(dfv)){
 
   writeLines("Calculating outlierliness based on Mahalanobis distance...")
     x<- system.time({
-      tx <- try(Md <- Mahalanobis(dfv2))
+      tx <- try(Md <- Mahalanobis(dfv2, S=S))
       if("try-error" %in% class(tx)){
         Md <- NA}
       })
     print(x)
 
-  writeLines("Calculating outlierliness based on harmonic mean of euclidean distance correcting for variances...")
+  writeLines("Calculating outlierliness based on harmonic mean of euclidean distance correcting for covariances...")
     x<- system.time({
-      tx <- try(Hd_var <- harmonicDist(dfv2))
+      tx <- try(Hd_var <- harmonicDist(dfv2,S=S))
       if("try-error" %in% class(tx)){
-        Hd_var <- NA}
+        Hd <- NA}
       })
     print(x)
   
-    writeLines("Calculating outlierliness based on harmonic mean of euclidean distance correcting for covariances...")
-    x<- system.time({
-      tx <- try(Hd_cov <- harmonicDist2(dfv2))
-      if("try-error" %in% class(tx)){
-        Hd_cov <- NA}
-      })
-    print(x)
 
-  writeLines("Calculating outlierliness based on kernel density and given bandwith (assume var)...")
+  writeLines("Calculating outlierliness based on kernel density and given bandwith (assume covar)...")
     x<- system.time({
       bw <- c(seq(0.01,0.1,by=0.01),seq(0.2,1,by=0.1))
       #plot(bw, Kd.ML)
      tx <- try({
-      Kd.ML <- kernelDeviance(dfv2, bandwidth = bw)
+      Kd.ML <- kernelDeviance(dfv2, bandwidth = bw, S=S)
       bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]]
-      Kd_var <- kernelDist(dfv2, bandwidth = bw.best)
+      Kd <- kernelDist(dfv2, bandwidth = bw.best)
       })
      if("try-error" %in% class(tx)){Kd_var <- NA}
     })
     print(x)
   
-    writeLines("Calculating outlierliness based on kernel density and given bandwith (assume cov)...")
-    x<- system.time({
-      bw <- c(seq(0.01,0.1,by=0.01),seq(0.2,1,by=0.1))
-      #plot(bw, Kd.ML)
-     tx <- try({
-      Kd.ML <- kernelDeviance2(dfv2, bandwidth = bw)
-      bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]]
-      Kd_cov <- kernelDist2(dfv2, bandwidth = bw.best)
-      })
-     if("try-error" %in% class(tx)){Kd_cov <- NA}
-    })
-    print(x)
-
-  writeLines("Calculating outlierliness based on euclidean distance to nearest neighbor (var)...")
-    x<- system.time({
-      tx <- try(Nd_var <- neighborDist(dfv2))
-      if("try-error" %in% class(tx)){
-        Nd_var <- NA}
-      })
-    print(x)
   
     writeLines("Calculating outlierliness based on euclidean distance to nearest neighbor (cov)...")
     x<- system.time({
-      tx <- try(Nd_cov <- neighborDist2(dfv2))
+      tx <- try(Nd <- neighborDist(dfv2, S=S))
       if("try-error" %in% class(tx)){
-        Nd_cov <- NA}
+        Nd <- NA}
       })
     print(x)
 
   dfv$pcs[rows.keep] <- pcs
   dfv$Hcd[rows.keep] <- Hcd
   dfv$Md[rows.keep] <- Md
-  dfv$Hd_var[rows.keep] <- Hd_var
-  dfv$Hd_cov[rows.keep] <- Hd_cov
-  dfv$Kd_var[rows.keep] <- Kd_var
-  dfv$Kd_cov[rows.keep] <- Kd_cov
-  dfv$Nd_var[rows.keep] <- Nd_var
-  dfv$Nd_cov[rows.keep] <- Nd_cov
+  dfv$Hd[rows.keep] <- Hd
+  dfv$Kd[rows.keep] <- Kd
+  dfv$Nd[rows.keep] <- Nd
   return(dfv)
 }
