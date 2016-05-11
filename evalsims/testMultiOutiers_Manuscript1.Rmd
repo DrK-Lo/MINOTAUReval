@@ -6,19 +6,27 @@ output: html_document
 ---
 
 ```{r}
-getwd() 
+#getwd() 
 #
-setwd("/Users/katie/Desktop/MINOTAUReval/")
+#setwd("/Users/katie/Desktop/MINOTAUReval/")
 source("evalsims/distanceFunctionsOther.R")
 #source("misc/evalsims/ComparePlot.R")
 source("evalsims/Getdf.R")
 source("evalsims/getEmpiricalP2.R")
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+if(!("qvalue" %in% installed.packages())){
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("qvalue")
+  }
+if(!("MINOTAUR" %in% installed.packages())){
+  install_github("NESCent/MINOTAUR", build_vignettes=TRUE)
+  }
+
 library(qvalue)
-#install.packages("devtools", dependencies=TRUE)
-#install.packages("rrcovNA")
 library(rrcovNA)
 library(devtools)
-install_github("NESCent/MINOTAUR@shinyDashboard")
 library(MINOTAUR)
 ```
 
@@ -114,6 +122,9 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
 ```
 
 #### Compare CovNAMcd to covariance using all data
+
+Darren this is the code chunck you want
+
 ```{r}
   # Covariance matrix of all data
     S <- cov(dfv[!is.na(rowSums(dfv[,colnums])),colnums])
@@ -197,7 +208,8 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
   plot_TwoRefUnivarDist()  
 ```
 
-### Plot Two Ref example default covariance ####
+### Plot Two Ref example: compare default and mcd covariance ####
+
 ```{r}
 #png("figures_man1/TwoRef_log_var.png", width=10, height=8, res=450, units="in")
 makeplot <- function(dfv2.out){
@@ -226,7 +238,7 @@ makeplot <- function(dfv2.out){
 }#end funciton
 
 makeplot(dfv2.out)
-quartz()
+
 makeplot(dfv4.out)
 
 ```

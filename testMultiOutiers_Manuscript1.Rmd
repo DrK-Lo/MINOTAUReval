@@ -1,0 +1,236 @@
+---
+title: "Test multivariate outliers and cov. calculations manuscript 1"
+author: "Katie Lotterhos"
+date: "April 11, 2016"
+output: html_document
+---
+
+```{r}
+#getwd() 
+#
+#setwd("/Users/katie/Desktop/MINOTAUReval/")
+source("evalsims/distanceFunctionsOther.R")
+#source("misc/evalsims/ComparePlot.R")
+source("evalsims/Getdf.R")
+source("evalsims/getEmpiricalP2.R")
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+if(!("qvalue" %in% installed.packages())){
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("qvalue")
+  }
+
+library(qvalue)
+library(rrcovNA)
+library(devtools)
+install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
+library(MINOTAUR)
+```
+
+#### Non Parameteric Simulation Example
+```{r}
+  np <- read.csv("data/df_inverse.csv")
+  head(np)
+  tail(np)
+  nrow(np)
+  np2 <- Getdf(np)
+  col <- rep("grey", nrow(np2))
+  pch <- rep(19, nrow(np2))
+  cex <- rep(0.8, nrow(np2))
+  col[1001:1002] <- "blue"
+  pch[1001:1002] <- c(17,18)
+  cex[1001:1002] <- 2
+  ind <- c(1:1000/10000,.11,0.12)
+
+png("figures_man1/nonPara_dist.png", width=4, height=4, res=300, units="in")
+  plot(np, col=col, pch=pch, cex=cex)
+dev.off()
+
+  plot(np, col=col, pch=pch, cex=cex)
+
+
+png("figures_man1/nonPara_log.png", width=10, height=12, res=300, units="in")
+  make_nonPara_log <- function(){
+  par(mfrow=c(4,2), mar=c(3,4,1,1), bty="l")
+    plot(ind,log(np2$Md), col=col, pch=pch, ylab= "log(Mahalanobis)", cex=cex, xaxt="n")
+      #abline(sort(log(dfv3.out$Md[dfv3.out$s==0]))[9900*0.999],0)
+      #text(0,1.5, "A", cex=2)
+    #plot(0,0, xaxt="n", yaxt="n")
+    plot(density(np2$Md), main="")
+  
+      #abline(sort(log(dfv3.out$Hd[dfv3.out$s==0]))[9900*0.999],0)
+      #text(0,1.5, "B", cex=2)
+      #text(0,2.3,round(getEmpPower(dfv3.out$Hd,dfv3.out$s_high==0),2))
+    plot(ind,log(np2$Hd), col=col, pch=pch, ylab= "log(Harmonic mean dist.)(cov)", cex=cex, xaxt="n")
+     plot(density(np2$Hd), main="")
+
+
+  
+    plot(ind, log(np2$Kd), col=col, pch=pch, ylab= "log(Kernel density) (cov)", cex=cex, xaxt="n")
+    plot(density(np2$Kd), main="") 
+
+   
+    plot(ind, log(np2$Nd), col=col, pch=pch, ylab= "log(Nearest neighbor)(cov)", cex=cex, xaxt="n")
+    plot(density(np2$Nd), main="") 
+}
+dev.off()
+make_nonPara_log()
+```
+
+### Two refugia example
+
+Load data and output dataframe with two kinds of multivariate stats: one that only standardizes by the variance in each dimension, and one that standardizes by the variance-covariance matrix (for three functions: harmonicDist, neighborDist, and kernelDist.)  The `Getdf()` function uses kernelDeviance to calculate the best bandwidth.
+
+
+```{r}
+  d1 <- read.table("~/Google Drive/MultiOutlierVisualization/practiceData/KatieSims/2R_R30_1351142970_988_6_NumPops=30_NumInd=20Bayenv2LFMMpca.Cpval", header=TRUE)
+  head(d1)
+  dfv <- d1[c(1,3,4,5,10,12,13,15:17,34)]
+  dim(dfv)
+  head(dfv)
+  #dfv2 <- dfv[dfv$SNPIncluded,]
+  colnums <- 8:11
+  #head(dfv)
+  #str(dfv)
+  #cbind(colnames(dfv))
+
+  table(dfv$s_high)
+  names(dfv)[colnums]
+```
+
+#### Get the covariance using all data (default)
+```{r}
+  dfv2.out <- Getdf(dfv, colnums)
+
+  dim(dfv)
+  dim(dfv2.out)
+  head(dfv2.out)
+  dfv3.out <- dfv2.out[,-c(12:13)]
+  head(dfv3.out)
+ 
+  head(dfv3.out)
+```
+
+#### Compare CovNAMcd to covariance using all data
+
+Darren this is the code chunck you want
+
+```{r}
+  # Covariance matrix of all data
+    S <- cov(dfv[!is.na(rowSums(dfv[,colnums])),colnums])
+    S
+    solve(S)
+  # Covariance of neutral loci
+    Sneut <- cov(dfv[dfv$s_high==0,colnums])
+    Sneut
+    solve(Sneut)
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+  plot(log(abs(Sneut)), log(abs(S))); abline(0,1)
+
+  S_mcd <- CovNAMcd(dfv[,colnums])
+  S_mcd
+  Sneut_mcd <- CovNAMcd(dfv[dfv$s_high==0,colnums])
+  Sneut_mcd 
+  str(S_mcd@cov)
+
+# Compare cov of neutral data to cov_mcd of all data
+  plot(log(abs(Sneut)), log(abs(S_mcd@cov))); abline(0,1)
+
+# Compare cov_mcd of all data to cov_mcd of neutral data
+  plot(log(abs(Sneut_mcd@cov)), log(abs(S_mcd@cov))); abline(0,1)
+
+  dfv4.out <- Getdf(dfv, colnums, S=S_mcd@cov)
+  head(dfv4.out)
+  dfv5.out <- dfv4.out[,-c(12:13)]
+#write.table(dfv5.out, "data/TwoRefSimForShinyM.txt",row.names=FALSE)
+
+
+```
+
+
+### Set color levels for plotting
+```{r}
+ col <- factor(dfv2.out$s_high)
+  levels(col) = c("grey",  "#9ad0f3", "#0072B2", "#D55E00")
+  col <- as.character(col)
+  ind <- c(1:9900/100, 100:199)
+  cex <- c(rep(0.8, 9900), rep(1.1, 100))
+  pch <- c(rep(19, 9900), rep(17, 100))
+```
+
+### Plot univariate Distributions of Two Ref model
+
+```{r}
+  png("figures_man1/TwoRefUnivarDist.png", width=6, height=6, res=450, units="in")
+  plot_TwoRefUnivarDist<-function(){
+    dplot <- dfv[,colnums]
+    dplot[,2] <- abs(dplot[,2]) #abs for rho
+    names <- c("log(Bayes Factor)", "Spearman's rho", "XTX", "Z-Score")
+    colnames(dplot)
+    par(mfrow=c(3,3), mar=c(3,3,0,0), oma=c(1,1,1,1))
+      # (1,1) BF vs rho
+      plot(dplot[,1], dplot[,2], col=col, pch=pch, bty="n")
+        mtext("Bayes Factor", side=1, line=2.5, cex=1)
+        mtext("Spearman's rho", side=2, line=2.5, cex=1)
+      # (1,2) XTX vs rho
+      plot(dplot[,3], dplot[,2], col=col, pch=pch, bty="n")
+      # (1,3) Z vs rhow
+      plot(dplot[,4], dplot[,2], col=col, pch=pch, bty="n")
+      # (2, 1) blank
+      plot(NULL, NULL, xlim=c(0,1), ylim=c(0,1), xaxt="n", yaxt="n", bty="n")
+      # (2,2) XTX vs BF
+      plot(dplot[,3], dplot[,1], col=col, pch=pch, bty="n")
+        mtext("XTX", side=1, line=2.5, cex=1)
+        mtext("Bayes Factor", side=2, line=2.5, cex=1)
+      # (2,3) Z vs BF
+      plot(dplot[,4], dplot[,1], col=col, pch=pch, bty="n")
+      # (3, 1) blank
+      plot(NULL, NULL, xlim=c(0,1), ylim=c(0,1), xaxt="n", yaxt="n", bty="n")
+      # (3, 2) blank
+      plot(NULL, NULL, xlim=c(0,1), ylim=c(0,1), xaxt="n", yaxt="n", bty="n")
+      # (2,3) Z vs XTX
+      plot(dplot[,4], dplot[,3], col=col, pch=pch, bty="n")
+          mtext("Z-score", side=1, line=2.5, cex=1)
+          mtext("XTX", side=2, line=2.5, cex=1)
+    }
+    dev.off()
+    
+  plot_TwoRefUnivarDist()  
+```
+
+### Plot Two Ref example: compare default and mcd covariance ####
+
+```{r}
+#png("figures_man1/TwoRef_log_var.png", width=10, height=8, res=450, units="in")
+makeplot <- function(dfv2.out){
+   par(mfrow=c(2,2), mar=c(3,4,1,1), bty="l")
+    plot(ind, log(dfv2.out$Md), col=col, pch=pch, ylab= "log(Mahalanobis)", cex=cex)
+      abline(sort(log(dfv2.out$Md[dfv2.out$s==0]))[9900*0.999],0)
+      text(5,max(log(dfv2.out$Md), na.rm=TRUE)*0.95, "A", cex=2)
+      text(30,max(log(dfv2.out$Md), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Md,dfv2.out$s_high==0),2))
+      legend(125, mean(log(dfv2.out$Md), na.rm=TRUE), legend=c("Neutral", "s = 0.005", "s=0.01", "s=0.1"),
+             pch=c(19, 17, 17,17), col=c("grey",  "#9ad0f3", "#0072B2", "#D55E00"))
+
+    plot(ind, log(dfv2.out$Hd), col=col, pch=pch, ylab= "log(Harmonic mean dist.)", cex=cex)
+      abline(sort(log(dfv2.out$Hd[dfv2.out$s==0]))[9900*0.999],0)
+      text(5,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95, "B", cex=2)
+      text(30,max(log(dfv2.out$Hd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Hd,dfv2.out$s_high==0),2))
+
+    plot(ind, log(dfv2.out$Kd), col=col, pch=pch, ylab= "log(Kernel density)", cex=cex)
+      abline(sort(log(dfv2.out$Kd[dfv2.out$s==0]))[9900*0.999],0)
+      text(5,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95, "C", cex=2)
+      text(30,max(log(dfv2.out$Kd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Kd,dfv2.out$s_high==0),2))
+
+    plot(ind, log(dfv2.out$Nd), col=col, pch=pch, ylab= "log(Nearest neighbor)", cex=cex)
+      abline(sort(log(dfv2.out$Nd[dfv2.out$s==0]))[9900*0.999],0)
+      text(5,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95, "D", cex=2)
+      text(30,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Nd,dfv2.out$s_high==0),2))
+}#end funciton
+
+makeplot(dfv2.out)
+
+makeplot(dfv4.out)
+
+```
+
