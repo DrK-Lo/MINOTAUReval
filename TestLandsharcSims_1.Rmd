@@ -1,3 +1,11 @@
+---
+title: "Eval Landsharc sims"
+author: "Katie Lotterhos"
+date: "May 24, 2016"
+output: html_document
+---
+### Load packages and data
+```{r setup, include=FALSE}
 setwd("/Users/katie/Desktop/MINOTAUReval")
 source("evalsims/ComparePlot2.R")
 source("evalsims/distanceFunctionsOther.R")
@@ -19,13 +27,23 @@ install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
 library(MINOTAUR)
 
 headdir <- "~/Google Drive/MultiOutlierVisualization/practiceData/KatieSims/"
-resultsdir <- "~/Google Drive/MultiOutlierVisualization/practiceData/KatieSimsResults/"
+resultsdir <- "~/Desktop/MINOTAUReval/results/"
 filelist <- list.files(headdir)
 filelist <- filelist[-55]
 length(filelist)
 if (!length(filelist)==72){print("Errr: missing simulation files")}
 
+sessionInfo()
+```
 
+### Loop through each dataset
+The following chunk of code does for each dataset:
+1) calculate multivariate distances based on default covariance matrix
+2) compares covariance matrix estimated from just neutral loci to covariance matrix on all data and MCD estimate of covariance
+3) calculate multivariate distances based on MCD covariance matrix
+4) calculates empirical power for all stats
+
+```{r}
 summarydf <- NULL
 for (i in 1:length(filelist)){
   print(c(i, filelist[i]))
@@ -57,7 +75,7 @@ for (i in 1:length(filelist)){
     neut <- as.numeric(log(abs(Sneut)))
     all <- as.numeric(log(abs(Sall)))
     mcd <- as.numeric(log(abs(S_mcd@cov)))
-    par(mar=c(4,1,1,1), bty="n")
+    par(mar=c(4,3,1,1), bty="n")
      plot(neut, all, pch=19, col="blue",
           xlab="log(abs(covariance)):\nNeutral loci only", ylab="") 
       abline(0,1, lwd=2)
@@ -101,36 +119,10 @@ for (i in 1:length(filelist)){
              Md.mcd.ep = getEmpPower(dat.out$Md.mcd, dat.out$s_high==0),
              Hd.mcd.ep = getEmpPower(dat.out$Hd.mcd, dat.out$s_high==0),
              Kd.mcd.ep = getEmpPower(dat.out$Kd.mcd, dat.out$s_high==0),
-             Nd.mcd.ep = getEmpPower(dat.out$Nd.mcd, dat.out$s_high==0),
+             Nd.mcd.ep = getEmpPower(dat.out$Nd.mcd, dat.out$s_high==0)
     )
   summarydf <- rbind(summarydf,out)
 }
 
 write.table(summarydf,file = paste(resultsdir,"LandsharcSummary.txt", sep=""))
-
-colnames(summarydf)<-sub(".ep", "",colnames(summarydf))
-
-pdf(paste(resultsdir,"LandsharcSummary.pdf", sep=""), width = 6, height = 8)
-    par(mfrow=c(4,1), mar=c(3,3,1,1),oma=c(1,3,1,0))
-    x <- 0.5
-    y <- 1.1
-    stats <- c(3:12)
-    colors <- c(rep("magenta",4), rep("blue",1), rep("lightblue",3), rep("darkblue",3))
-    boxplot(summarydf[summarydf$demog=="IM",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "IM", cex=2)
-    boxplot(summarydf[summarydf$demog=="IBD",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "IBD", cex=2)
-    boxplot(summarydf[summarydf$demog=="1R",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "1R", cex=2)
-    boxplot(summarydf[summarydf$demog=="2R",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "2R", cex=2)
-    mtext("Empirical Power", side=2, outer=TRUE)
-dev.off()
-# colMeans(summarydf[summarydf$demog=="IM",3:10])
-# colMeans(summarydf[summarydf$demog=="IBD",3:10])
-# colMeans(summarydf[summarydf$demog=="1R",3:10])
-# colMeans(summarydf[summarydf$demog=="2R",3:10])
+```

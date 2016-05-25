@@ -71,7 +71,10 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
       #plot(bw, Kd.ML)
      tx <- try({
       Kd.ML <- kernelDeviance(dfv2, bandwidth = bw, S=S)
+      plot(bw, log(Kd.ML,10))
+      print(cbind(bw, log(Kd.ML,10)))
       bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]]
+      print(bw.best)
       Kd <- kernelDist(dfv2, bandwidth = bw.best)
       })
      if("try-error" %in% class(tx)){Kd <- NA}

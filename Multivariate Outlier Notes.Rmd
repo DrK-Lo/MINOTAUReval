@@ -1,0 +1,121 @@
+---
+title: "Multivariate outlier notes"
+author: "Katie Lotterhos"
+date: "May 24, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Maronna 1976
+* Don't understand
+
+### Alfons 2016 multivariate association between two datasets.pdf
+* The R Package ccaPP
+* Alfons A, Croux C, Filzmoser P (2016) Robust Maximum Association Between Data Sets: The R Package ccaPP. Austrian J Stat 45:71
+* An intuitive measure of association between two multivariate data sets can be defined as the maximal value that a bivariate association measure between any one-dimensional projections of each data set can attain
+* Note that using the Pearson correlation as the projection index of the maximum associa- tion estimator corresponds to the first step of canonical correlation analysis (CCA; see, e.g., Johnson and Wichern 2002), hence the package name ccaPP. 
+* We thereby use the classic diabetes data (Andrews and Herzberg 1985, page 215), which are included as example data in the package. Component x consists of p = 2 variables measuring relative weight and fasting plasma glucose, while component y consists of q = 3 variables measuring glucose intolerance, insulin response to oral glucose and insulin resistance. It is of medical interest to establish a relation between the two data sets.
+
+### Biometrika-2015-Ro-589-99.pdf: Outlier detection for high-dimensional data
+* Ro K, Zou C, Wang Z, Yin G (2015) Outlier detection for high-dimensional data. Biometrika 102:589–599
+* For high- dimensional data, classical methods based on the Mahalanobis distance are usually not applicable. We propose an outlier detection procedure that replaces the classical minimum covariance determinant estimator with a high-breakdown minimum diagonal product estimator. 
+* In robust statistics, estimation of the multivariate location parameter μ and covariance matrix is challenging, as many **classical methods break down in the presence of n/(p + 1) outliers**. (p is the number of variables or dimensions and n is the sample size)
+* Even in the p < n case, as p increases, the traditional methods for outlier detection based on the Mahalanobis distance may become degenerate, and the contamination bias, which grows rapidly with p, could make the minimum covariance determinant unreliable for large p
+* To overcome the difficulties with high-dimensional data, we modify the Mahalanobis distance so that it involves only the diagonal elements of the covariance matrix. The modified Mahalanobis distance (2) is invariant under a group of scalar transformations. Based on (2), we propose a high-breakdown minimum diagonal product estimator and develop an algorithm and threshold rule for outlier identification.
+* minimum covariance determinant approach aims to find a subset of observations whose sample covariance matrix has the smallest determinant; this method, however, may not be reliable or well-defined for high-dimensional data. 
+* Our method searches for a subset of h observations such that the product of the diagonal elements of the sample covariance matrix is minimal, and involves only the p marginal variances.
+
+### Wang 2015 Multivariate outlier review for medical imaging
+* Robust statistics perform well with data drawn from a wide range of probability distributions, especially for distributions that are not normally distributed. Robust statistical methods have been developed for many common problems, such as estimating data properties including location and scatter or estimating model param‐ eters as in regression analysis [10, 11]. One motivation is to produce statistical methods that are not unduly affected by outliers. Another motivation is to provide methods with good performance when there are small departures from a parametric distribution. A typical procedure or example of the former case is for multivariate estimation of location and covariance as well as for multivariate outlier detection. In this case, as a first step, the ap‐ proaches often try to search for a minimum number of observations with a certain degree of confidence being outlier-free. Based on this starting subset, location and covariance can be estimated robustly. In a second step, outliers can be identified through computing the observations’ distances with respect to these initial estimates.
+* The **Minimum Covariance Determinant** (MCD) estimator is a highly robust estimator of multivariate location and scatter. 
+    * dataset consisting of p variables and n observations, n x p matrix
+    * The MCD relies on a subset of the total observations. Choosing this subset makes the algorithm robust because it is less sensitive to the influence of outlying points. 
+    * MCD has a user-determined parameter, h , which specifies the size of the subset of data to base the estimate upon. It is constrained by (n + p + 1) / 2 ≤ h ≤ n. The h observations are chosen such that the determinant of the sample covariance matrix is minimal (but not mini‐ mized in the formal sense, because it relies on a sampling algorithm instead of a loss function)
+    * MCD is most robust when h = (n + p + 1) / 2 
+    * Computing the exact MCD is possible but computationally difficult, as it requires the evalu‐ ation of all ( hn ) subsets of size h .
+    * so-called Fast-MCD algorithm uses an algorithm that concentrates on the h observations with the smallest distances and det (Σ^ MCD ,2) is more
+concentrated (or equivalently, has a smaller determinant). 
+    
+* multivariate **Voronoi** outlier detection (MVOD) method for time series data
+    * A Voronoi diagram is a way of dividing space into regions. 
+    * The Voronoi Outlier Index (VOInd) used in our Multivariate Voronoi Outlier Detection (MVOD) method is based upon the Voronoi notion of nearest neighbors. For a point pi of set S , the nearest neighbors of pi defined by the Voronoi polygon V ( pi ) are the Voronoi nearest neighbor of pi, denoted as VNN (pi).
+
+
+* **machine learning**
+    * Novelty detection can be considered as the task of classifying test data that differ in some respect from the data that are available during training.
+    * Novelty detection methods can be categorized into several areas such as probabilistic, distance-based, reconstruction-based, domain-based, and information-theoretic techniques.
+    * **Probabilistic**
+        * More complex data distribution forms can be modeled through mixture models (e.g. Gaussian Mixture Models, or GMMs for short), or other mixtures of different types of distributions
+        * A common non-parametric approach for probabilistic density estimation is the kernel density estimator
+        * The kernel density estimator places a kernel (e.g. Gaussian) on each data point and then sums the contributions from a localized neighborhood of the kernel. 
+    * **Distance-based** approaches, such as clustering or nearest-neighbor methods [35-37], are another types of techniques that can be used for classification or for estimating the probability density function of data.     
+    * **Reconstruction-based** methods involve training a regression model with the training data [3, 38, 39]. The distance between the test vector and the output of the system (i.e. the reconstruction error) can be related to the novelty score, which would be high when “abnormal” data occurs. For instance, neural networks can be used in this way
+    * 
+
+### rrcov: An Object-oriented Framework for Robust Multivariate Analysis
+* Todorov V, Filzmoser P (2009) An Object-Oriented Framework for Robust Multivariate Analysis. J Stat Softw 32:1–47
+
+### Filzmoser 2013 id local multivariate outliers.pdf
+
+### Filzmoser outlier detection high dimensions.pdf
+
+### FastPCS.pdf
+
+#### Vakili fastPCS.pdf
+
+#### Schmitt fast PCS.pdf
+
+### Campbell Mahalanobis pathways humans.pdf
+
+### Cerioli_2010.pdf
+
+### Chen 2016 categorical clustering.pdf
+
+### Codrea Mahalonobis mutant screening.pdf
+
+### Daszykowski robust stats review.pdf
+
+### De Maesschalck 2000 Mahalanobis chemistry.pdf
+
+### Duong ks.pdf
+
+### Farber Mahalanobis example species distribution.pdf
+
+
+### Gao_etal_2005.pdf
+
+### Ghosh_2013.pdf
+
+### Gnanadesikan outlier.pdf
+
+### Hun Oh Kernel-based approach outliers biology.pdf
+
+### Jackson_et_al-2004-Environmetrics.pdf
+
+### Kenward_et_al-2001-Ecology.pdf
+
+### ks kernel package.pdf
+
+### Mahalanobis.pdf
+
+### Munoz outlier detection.pdf
+
+### mvoutlier.pdf
+
+
+### Shieh_2009.pdf
+
+### Stapanian multivariate outliers fisheries kurtosis.pdf
+
+### Todorov robust outlier.pdf
+
+### Vakalli and Schmitt Fast PCS.pdf
+
+
+
+### whitlock 2005.pdf
+
+### Williams Mahalanobis example.pdf
