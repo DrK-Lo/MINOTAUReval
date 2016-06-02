@@ -19,13 +19,18 @@ if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
 if(!("qvalue" %in% installed.packages())){
   source("https://bioconductor.org/biocLite.R")
   biocLite("qvalue")
-  }
+}
+if(!("cluster" %in% installed.packages())){install.packages("cluster")}
+if(!("MASS" %in% installed.packages())){install.packages("MASS")}
 
 library(qvalue)
 library(rrcovNA)
 library(devtools)
 install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
 library(MINOTAUR)
+#install.packages("cluster")
+library(cluster)
+library(MASS)
 ```
 
 #### Non Parameteric Simulation Example
@@ -116,8 +121,12 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
 ```
 
 #### Compare CovNAMcd to covariance using all data
+The fast MCD algorithm was developed by Rousseeuw in 1999.  In that paper, he says that 
+the default h (subset) is (n+p+1)/2 but the user may choose any value between this ratio and 1.
 
-Darren this is the code chunck you want
+If you are sure that the dataset contains less than 25% contamination, a good compromise between breakdown value and statistical efficiency is obtained by putting h=0.75n.
+
+At the end of the FAST-MCD, the final mean and covariance are estimated from points with MCD-Md less than the standard deviation of the 97.5% on a chi-square distribution. (I found that for the mean this is exactly true; for the covariance this is not exactly true because it is divided by the number of points -1)
 
 ```{r}
   # Covariance matrix of all data
@@ -128,31 +137,49 @@ Darren this is the code chunck you want
     Sneut <- cov(dfv[dfv$s_high==0,colnums])
     Sneut
     solve(Sneut)
+  
   par(mfrow=c(1,1), mar=c(4,4,1,1))
   plot(log(abs(Sneut)), log(abs(S))); abline(0,1)
 
-  S_mcd <- CovNAMcd(dfv[,colnums])
-  S_mcd
+  S_mcd.50 <- CovNAMcd(dfv[,colnums])
+  S_mcd.50
+  S_mcd.75 <- CovNAMcd(dfv[,colnums], alpha=0.75)
+  S_mcd.75
   Sneut_mcd <- CovNAMcd(dfv[dfv$s_high==0,colnums])
   Sneut_mcd 
-  str(S_mcd@cov)
   
-  length(S_mcd@best)
-  sum(S_mcd@best>9900) # selected loci included
-  sum(S_mcd@best<100) # example of neutral loci included
+  ### These lengths should reflect the number of poitns used in the algorithm
+  length(S_mcd.50@best)
+  length(S_mcd.75@best)
+  
+  ### Compare number of selected loci included in 95% CI of MCD volume
+  sum(S_mcd.50@raw.wt[9901:9999]) # selected loci included
+  sum(S_mcd.50@raw.wt[1:9900]) # example of neutral loci included
+  
+  ### Compare number of selected loci included in 95% CI of MCD volume
+  sum(S_mcd.75@raw.wt[9901:9999]) # selected loci included
+  sum(S_mcd.75@raw.wt[1:9900]) # example of neutral loci included
+  
+  robust.50 <- as.logical(S_mcd.50@raw.wt)
+  robust.75 <- as.logical(S_mcd.75@raw.wt)
   
   # compare the MCD covariance to the covariance calculated on the "best" points
-  plot(log(abs(S_mcd@cov)), log(abs(cov(dfv[S_mcd@best,colnums]))))#, xlim=c(0,10), ylim=c(0,10))
+  plot(log(abs(S_mcd.50@cov)), log(abs(cov(dfv[robust.50,colnums]))))#, xlim=c(0,10), ylim=c(0,10))
   abline(0,1)
-    # not sure why they aren't the same
+    # these are not strictly the same; the covariance matrix calculation is not the same for R
   
-# Compare cov of neutral data to cov_mcd of all data
-  plot(log(abs(Sneut)), log(abs(S_mcd@cov))); abline(0,1)
+  # compare MCD based on 50% to 75% 
+  plot(log(abs(S_mcd.50@cov)), log(abs(S_mcd.75@cov)))#, xlim=c(0,10), ylim=c(0,10))
+  abline(0,1)
+  
+  # Compare cov of neutral data to cov_mcd of all data
+  plot(log(abs(Sneut)), log(abs(S_mcd.50@cov))); abline(0,1)
+    plot(log(abs(Sneut)), log(abs(S_mcd.75@cov))); abline(0,1)
 
-# Compare cov_mcd of all data to cov_mcd of neutral data
-  plot(log(abs(Sneut_mcd@cov)), log(abs(S_mcd@cov))); abline(0,1)
+# Compare cov_mcd of all data to cov_mcd of neutral data for 50%
+  plot(log(abs(Sneut_mcd@cov)), log(abs(S_mcd.50@cov))); abline(0,1)
 
-  dfv4.out <- Getdf(dfv, colnums, S=S_mcd@cov,  M=S_mcd@center)
+  dfv4.out <- Getdf(dfv, colnums, S=S_mcd.75@cov,  M=S_mcd.75@center)
   head(dfv4.out)
   dfv5.out <- dfv4.out[,-c(12:13)]
 #write.table(dfv5.out, "data/TwoRefSimForShinyM.txt",row.names=FALSE)
@@ -161,14 +188,17 @@ Darren this is the code chunck you want
 
 #### Compare to CovNAMcd and to subset points
 ```{r}
-  dfv6.subset <- Getdf(dfv, colnums, S=S_mcd@cov, M=S_mcd@center, subset=S_mcd@best)
-  dfv6.subset <- dfv6.subset[,-c(12:13)]
+  dfv6.subsetbest <- Getdf(dfv, colnums, S=S_mcd.75@cov, M=S_mcd.75@center, subset=S_mcd.75@best)
+  #dfv6.subsetbest <- dfv6.subsetbest[,-c(12:13)]
+  
+    dfv6.subsetRawWt <- Getdf(dfv, colnums, S=S_mcd.75@cov, M=S_mcd.75@center, subset=which(S_mcd.75@raw.wt==1))
+  #dfv6.subsetRawWt <- dfv6.subsetRawWt[,-c(12:13)]
 ```
 
 
 ### Set color levels for plotting
 ```{r}
- col <- factor(dfv2.out$s_high)
+  col <- factor(dfv2.out$s_high)
   rgb(0,0,0,0.1)
   levels(col) = c("#0000001A",  "#9ad0f3", "#0072B2", "#D55E00")
   col <- as.character(col)
@@ -180,65 +210,48 @@ Darren this is the code chunck you want
 ### Plot classical vs. robust
 
 ```{r}
-#install.packages("cluster")
-library(cluster)
-library(MASS)
-
-par(mfrow=c(1,1), mar=c(4,4,1,1))
-plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
-points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
 X <- dfv[,colnums[2:3]]
+plot1 <- function(){
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+  plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n", xlim=c(-0.3,0.6))
+  points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
+}
+plot1()
 
 ### Add classical covariance
+
+plot2 <- function(){
   C.ls <- cov(X) ; m.ls <- colMeans(X)
   d2.99 <- qchisq(0.99, df = 2)
   lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
+  text(0.2, 25, "All data")
+}
+  plot1(); plot2()
+  
+### Add classical covariance of neutral loci
+plot3 <- function(){
+  C.ls <- cov(X[dfv$s_high==0,]) ; m.ls <- colMeans(X[dfv$s_high==0,])
+  d2.99 <- qchisq(0.99, df = 2)
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="blue", lwd=2)
+  text(0.25, 32, "Neutral only", col="blue", adj=0)
+}
+  plot1(); plot2(); plot3()
+
 
 ### Add robust covariance to plot
-  par(mfrow=c(1,1), mar=c(4,4,1,1))
-plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
-points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
-X <- dfv[,colnums[2:3]]
-  C.ls <- cov(X) ; m.ls <- colMeans(X)
-  d2.99 <- qchisq(0.99, df = 2)
-  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
-  Cxy <- cov.rob(X)
-  str(Cxy)
-  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
-  
-### Add "best" points to plot
-  par(mfrow=c(1,1), mar=c(4,4,1,1))
-plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
-points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
-X <- dfv[,colnums[2:3]]
-  C.ls <- cov(X) ; m.ls <- colMeans(X)
-  d2.99 <- qchisq(0.99, df = 2)
-  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
-  Cxy <- cov.rob(X)
-  str(Cxy)
-  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
-  points(X[Cxy$best,], pch=19, cex=0.1, col="magenta")  
-
-  # add covariance based on "best" points
-  par(mfrow=c(1,1), mar=c(4,4,1,1))
-plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
-points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
-X <- dfv[,colnums[2:3]]
-  C.ls <- cov(X) ; m.ls <- colMeans(X)
-  d2.99 <- qchisq(0.99, df = 2)
-  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
-  Cxy <- cov.rob(X)
-  str(Cxy)
-  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
-  points(X[Cxy$best,], pch=19, cex=0.1, col="magenta")  
-  
-  
-    Cbest <- cov(X[Cxy$best,]); Mbest <- colMeans(X[Cxy$best,])
-    lines(ellipsoidPoints(Cbest, d2 = d2.99, loc=Mbest), col="green", lwd=3)
-    
-      text(0.3,30, "All Data")
-      text(0.1, 24, "Robust covariance", col = "Magenta")
-      text(0.15, 39, "Cov of 'best' points", col="green")
+ 
+plot4 <- function(){
+  Cxy <- CovNAMcd(X, alpha=0.75)#cov.rob(X)
+  #str(Cxy)
+  #lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
+  lines(ellipsoidPoints(Cxy@cov, d2 = d2.99, loc=Cxy@center), col="magenta", lwd=3)
+  text(0.25, 29, "MCD estimate", col="magenta", adj=0)  
+}
+  plot1(); plot2(); plot3(); plot4()
+   
+### Add robust points to plot
+  plot1(); plot2(); plot3(); plot4()
+  points(X[Cxy@raw.wt==1,], pch=19, cex=0.1, col="magenta")  
 ```
 
 ### Compare cov.rob to CovNAMcd
@@ -247,20 +260,20 @@ X <- dfv[,colnums[2:3]]
   S_rob <- cov.rob(dfv[,colnums])
   S_rob$cov
   cov(dfv[S_rob$best, colnums])
-  identical(S_rob$best, S_mcd@best)
+  identical(S_rob$best, S_mcd.50@best)
   S_rob2 <- cov.rob(dfv[,colnums])
   identical(S_rob$best, S_rob2$best)
-    # every time is going to be a little different
+    # every time is going to be a little different because of the random subsetting
   
-  par(mfrow=c(3,1))
-  plot(log(abs(S_mcd@cov)), log(abs(S_rob$cov)))
+  plot(log(abs(S_mcd.50@cov)), log(abs(S_rob$cov)))
   abline(0,1)
+    # not sure why these are different
+   
+  plot(log(abs(S_mcd.75@cov)), log(abs(S_rob$cov)))
+  abline(0,1)
+    # not sure why these are different
   
-  plot(log(abs(S_mcd@cov)), log(abs(cov(dfv[S_mcd@best,colnums]))))#, xlim=c(0,10), ylim=c(0,10))
-  abline(0,1)
   
-  plot(log(abs(S_rob$cov)), log(abs(cov(dfv[S_rob$best, colnums]))))
-  abline(0,1)
 ```
 
 ### Plot univariate Distributions of Two Ref model
@@ -336,7 +349,9 @@ makeplot(dfv3.out) # raw
 
 makeplot(dfv5.out) # MCD cov
 
-makeplot(dfv6.subset) # MCD cov and "core" points
+makeplot(dfv6.subsetbest) # MCD cov and "best" points
+
+makeplot(dfv6.subsetRawWt) # MCD cov and "core" points
 
 ```
 
@@ -350,16 +365,31 @@ abline(0,1, col="black", lwd=2)
 plot(log(dfv2.out$Hd), log(dfv5.out$Hd), pch=pch, col=col,
      main = "Hd using all data vs MCD estimate")
 abline(0,1, col="black", lwd=2)
-plot(log(dfv5.out$Hd), log(dfv6.subset$Hd), pch=pch, col=col,
+plot(log(dfv5.out$Hd), log(dfv6.subsetRawWt$Hd), pch=pch, col=col,
      main = "Hd using MCD cov vs using\nMCD cov and robust points")
 abline(0,1, col="black", lwd=2)
-
-plot(log(dfv5.out$Kd), log(dfv6.subset$Kd), pch=pch, col=col,
-     main = "Kd using MCD cov vs using\nMCD cov and robust points")
+plot(log(dfv6.subsetbest$Hd), log(dfv6.subsetRawWt$Hd), pch=pch, col=col,
+     main = "Hd using MCD cov and 'best' vs using\nMCD cov and robust points")
 abline(0,1, col="black", lwd=2)
 
-plot(log(dfv5.out$Nd), log(dfv6.subset$Nd), pch=pch, col=col,
+plot(log(dfv5.out$Kd), log(dfv6.subsetbest$Kd), pch=pch, col=col,
+     main = "Kd using MCD cov vs using\nMCD cov and 'best' points")
+abline(0,1, col="black", lwd=2)
+plot(log(dfv5.out$Kd), log(dfv6.subsetRawWt$Kd), pch=pch, col=col,
+     main = "Kd using MCD cov vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
+plot(log(dfv6.subsetbest$Kd), log(dfv6.subsetRawWt$Kd), pch=pch, col=col,
+     main = "Kd using MCD cov 'best' vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
+
+plot(log(dfv5.out$Nd), log(dfv6.subsetbest$Nd), pch=pch, col=col,
+     main = "Nd using MCD cov vs using\nMCD cov and 'best' points")
+abline(0,1, col="black", lwd=2)
+plot(log(dfv5.out$Nd), log(dfv6.subsetRawWt$Nd), pch=pch, col=col,
      main = "Nd using MCD cov vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
+plot(log(dfv6.subsetbest$Nd), log(dfv6.subsetRawWt$Nd), pch=pch, col=col,
+     main = "Nd using MCD cov 'best' vs using\nMCD cov and robust points")
 abline(0,1, col="black", lwd=2)
 ```
 

@@ -70,11 +70,17 @@ for (i in 1:length(filelist)){
     
     # Covariance of MCD
     S_mcd <- CovNAMcd(dat2[,cols])
+    #length(S_mcd@best)
+    #sum(S_mcd@raw.wt)
+    S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
+    #length(S_mcd2@best)
+    #sum(S_mcd2@raw.wt)
     
     # Compare cov of neutral data to cov_mcd of all data
     neut <- as.numeric(log(abs(Sneut)))
     all <- as.numeric(log(abs(Sall)))
     mcd <- as.numeric(log(abs(S_mcd@cov)))
+    mcd.75 <- as.numeric(log(abs(S_mcd75@cov)))
     par(mar=c(4,3,1,1), bty="n")
      plot(neut, all, pch=19, col="blue",
           xlab="log(abs(covariance)):\nNeutral loci only", ylab="") 
@@ -82,9 +88,12 @@ for (i in 1:length(filelist)){
       abline(lm(all~neut), col="blue")
      points(neut, mcd, pch=17, col="orange")
      abline(lm(mcd~neut), col="orange")
-
+     points(neut, mcd.75, col="red")
+     abline(lm(mcd.75~neut), col="red", lwd=2)
+     legend(0,-2, c("raw", "mcd alpha=50", "mcd alpha=75"), col=c("blue", "orange", "red"), pch=c(19, 17, 1), bty="n")
+     
     ### Get stats based on mcd covmat
-    dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov, M=S_mcd@center)
+    dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd75@cov, M=S_mcd75@center)
     head(dat.out)
     colnames(dat.out)[(ncol(dat.out)-3):
                                ncol(dat.out)] <-
@@ -92,7 +101,7 @@ for (i in 1:length(filelist)){
      head(dat.out)
      
     ### Get stats based on mcd covmat and robust points
-    dat.out.subset <- Getdf(dat.out, cols, S=S_mcd@cov,  M=S_mcd@center, subset=S_mcd@best)
+    dat.out.subset <- Getdf(dat.out, cols, S=S_mcd75@cov,  M=S_mcd75@center, subset=which(S_mcd@raw.wt==1))
     head(dat.out.subset)
     colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
                                ncol(dat.out.subset)] <-
