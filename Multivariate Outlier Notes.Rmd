@@ -57,6 +57,37 @@ concentrated (or equivalently, has a smaller determinant).
 
 ### rrcov: An Object-oriented Framework for Robust Multivariate Analysis
 * Todorov V, Filzmoser P (2009) An Object-Oriented Framework for Robust Multivariate Analysis. J Stat Softw 32:1–47
+* the Mahalanobis distance which is based on location and scatter estimates of the data set. obust estimates of these parameters are called for, even more, they must possess a positive breakdown point. The estimates of the multivariate location vector μ and the scatter matrix $\sum$ are also a cornerstone in the analysis of multidimensional data, since they form the input to many classical multivariate methods.
+* Substituting the classical location and scatter estimates by their robust analogues is the most straightforward method for robustifying many multivariate procedures like principal components, discriminant and cluster analysis, canonical correlation, etc. 
+*  These requirements have been defined in the project “Robust Statistics and R”, see http://www.statistik.tuwien.ac.at/rsr/, and a first step in this direction was the initial development of the collaborative package robustbase (Rousseeuw et al. 2009) with the intention that it becomes the essential robust statistics R package covering the methods described in the recent book Maronna et al. (2006).
+* The corresponding robust methods can be seen as extensions to the classical ones which can cope with deviations from the stochastic assumptions thus mitigating the dangers for classical estimators. 
+* The **minimum covariance determinant MCD** estimator for a data set is defined by that subset of h observations whose covariance matrix has the smallest determinant among all possible subsets of size h.
+    * The MCD location and scatter estimate TMCD and CMCD are then given as the arithmetic mean and a multiple of the sample covariance matrix of that subset
+    * The multiplication factors cccf (consistency correction factor) and csscf (small sample cor- rection factor) are selected so that C is consistent at the multivariate normal model and unbiased at small samples. A recommendable choice for h is b(n + p + 1)/2c because then the BP of the MCD is maximized, but any integer h within the interval [(n + p + 1)/2, n] can be chosen,
+    * The naive algorithm would proceed by exhaustively investigating all subsets of size h out of n to find the subset with the smallest determinant of its covariance matrix, but this will be feasible only for very small data sets. The algorithm is based on the C-step, “C” in C-step stands for “concentration” since we are looking for a more “concentrated” covariance matrix with lower determinant.  the iteration process given by the C-step converges in a finite number of steps to a (local) minimum. Since there is no guarantee that the global minimum of the MCD objective function will be reached, the iteration must be started many times from different initial subsets, to obtain an approximate solution.
+*  Also cover many other robust estimates
+```{r}
+
+install.packages(rrcov)
+library(rrcov)
+
+data("delivery")
+delivery.x <- delivery[, 1:2]
+data("hbk")
+hbk.x <- hbk[, 1:3]
+mcd <- CovMcd(delivery.x)
+mcd
+summary(mcd)
+plot(mcd, which = "dd")
+
+data("milk")
+usr <- par(mfrow = c(1, 2))
+plot(CovMcd(delivery[, 1:2]), which = "tolEllipsePlot", classic = TRUE)
+plot(CovMcd(milk), which = "screeplot", classic = TRUE)
+par(usr)
+```
+
+* PCA can also be robust.
 
 ### Filzmoser 2013 id local multivariate outliers.pdf
 

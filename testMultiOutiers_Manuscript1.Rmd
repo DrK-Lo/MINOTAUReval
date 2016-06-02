@@ -84,19 +84,22 @@ Load data and output dataframe with two kinds of multivariate stats: one that on
 
 
 ```{r}
-  d1 <- read.table("~/Google Drive/MultiOutlierVisualization/practiceData/KatieSims/2R_R30_1351142970_988_6_NumPops=30_NumInd=20Bayenv2LFMMpca.Cpval", header=TRUE)
+  d1 <- read.table("data/KatieSims/2R_R30_1351142970_988_6_NumPops=30_NumInd=20Bayenv2LFMMpca.Cpval", header=TRUE)
   head(d1)
   dfv <- d1[c(1,3,4,5,10,12,13,15:17,34)]
   dim(dfv)
   head(dfv)
   #dfv2 <- dfv[dfv$SNPIncluded,]
   colnums <- 8:11
+  dfv <- dfv[complete.cases(dfv),]
+  dim(dfv)
   #head(dfv)
   #str(dfv)
   #cbind(colnames(dfv))
 
   table(dfv$s_high)
   names(dfv)[colnums]
+
 ```
 
 #### Get the covariance using all data (default)
@@ -133,30 +136,131 @@ Darren this is the code chunck you want
   Sneut_mcd <- CovNAMcd(dfv[dfv$s_high==0,colnums])
   Sneut_mcd 
   str(S_mcd@cov)
-
+  
+  length(S_mcd@best)
+  sum(S_mcd@best>9900) # selected loci included
+  sum(S_mcd@best<100) # example of neutral loci included
+  
+  # compare the MCD covariance to the covariance calculated on the "best" points
+  plot(log(abs(S_mcd@cov)), log(abs(cov(dfv[S_mcd@best,colnums]))))#, xlim=c(0,10), ylim=c(0,10))
+  abline(0,1)
+    # not sure why they aren't the same
+  
 # Compare cov of neutral data to cov_mcd of all data
   plot(log(abs(Sneut)), log(abs(S_mcd@cov))); abline(0,1)
 
 # Compare cov_mcd of all data to cov_mcd of neutral data
   plot(log(abs(Sneut_mcd@cov)), log(abs(S_mcd@cov))); abline(0,1)
 
-  dfv4.out <- Getdf(dfv, colnums, S=S_mcd@cov)
+  dfv4.out <- Getdf(dfv, colnums, S=S_mcd@cov,  M=S_mcd@center)
   head(dfv4.out)
   dfv5.out <- dfv4.out[,-c(12:13)]
 #write.table(dfv5.out, "data/TwoRefSimForShinyM.txt",row.names=FALSE)
 
+```
 
+#### Compare to CovNAMcd and to subset points
+```{r}
+  dfv6.subset <- Getdf(dfv, colnums, S=S_mcd@cov, M=S_mcd@center, subset=S_mcd@best)
+  dfv6.subset <- dfv6.subset[,-c(12:13)]
 ```
 
 
 ### Set color levels for plotting
 ```{r}
  col <- factor(dfv2.out$s_high)
-  levels(col) = c("grey",  "#9ad0f3", "#0072B2", "#D55E00")
+  rgb(0,0,0,0.1)
+  levels(col) = c("#0000001A",  "#9ad0f3", "#0072B2", "#D55E00")
   col <- as.character(col)
-  ind <- c(1:9900/100, 100:199)
+  ind <- c(1:9900/100, 101:199)
   cex <- c(rep(0.8, 9900), rep(1.1, 100))
   pch <- c(rep(19, 9900), rep(17, 100))
+```
+
+### Plot classical vs. robust
+
+```{r}
+#install.packages("cluster")
+library(cluster)
+library(MASS)
+
+par(mfrow=c(1,1), mar=c(4,4,1,1))
+plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
+points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
+X <- dfv[,colnums[2:3]]
+
+### Add classical covariance
+  C.ls <- cov(X) ; m.ls <- colMeans(X)
+  d2.99 <- qchisq(0.99, df = 2)
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
+
+### Add robust covariance to plot
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
+points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
+X <- dfv[,colnums[2:3]]
+  C.ls <- cov(X) ; m.ls <- colMeans(X)
+  d2.99 <- qchisq(0.99, df = 2)
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
+  Cxy <- cov.rob(X)
+  str(Cxy)
+  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
+  
+### Add "best" points to plot
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
+points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
+X <- dfv[,colnums[2:3]]
+  C.ls <- cov(X) ; m.ls <- colMeans(X)
+  d2.99 <- qchisq(0.99, df = 2)
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
+  Cxy <- cov.rob(X)
+  str(Cxy)
+  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
+  points(X[Cxy$best,], pch=19, cex=0.1, col="magenta")  
+
+  # add covariance based on "best" points
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+plot(dfv[,colnums[2:3]], col=rgb(0,0,0,0.05), pch=pch, ylim=c(20,80), bty="n")
+points(dfv[9901:9999,colnums[2:3]], col=col[9901:9999], pch=pch[9901:9999], ylim=c(20,80))
+X <- dfv[,colnums[2:3]]
+  C.ls <- cov(X) ; m.ls <- colMeans(X)
+  d2.99 <- qchisq(0.99, df = 2)
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
+  Cxy <- cov.rob(X)
+  str(Cxy)
+  lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
+  points(X[Cxy$best,], pch=19, cex=0.1, col="magenta")  
+  
+  
+    Cbest <- cov(X[Cxy$best,]); Mbest <- colMeans(X[Cxy$best,])
+    lines(ellipsoidPoints(Cbest, d2 = d2.99, loc=Mbest), col="green", lwd=3)
+    
+      text(0.3,30, "All Data")
+      text(0.1, 24, "Robust covariance", col = "Magenta")
+      text(0.15, 39, "Cov of 'best' points", col="green")
+```
+
+### Compare cov.rob to CovNAMcd
+```{r}
+### Compare cov.rob function to mcd function
+  S_rob <- cov.rob(dfv[,colnums])
+  S_rob$cov
+  cov(dfv[S_rob$best, colnums])
+  identical(S_rob$best, S_mcd@best)
+  S_rob2 <- cov.rob(dfv[,colnums])
+  identical(S_rob$best, S_rob2$best)
+    # every time is going to be a little different
+  
+  par(mfrow=c(3,1))
+  plot(log(abs(S_mcd@cov)), log(abs(S_rob$cov)))
+  abline(0,1)
+  
+  plot(log(abs(S_mcd@cov)), log(abs(cov(dfv[S_mcd@best,colnums]))))#, xlim=c(0,10), ylim=c(0,10))
+  abline(0,1)
+  
+  plot(log(abs(S_rob$cov)), log(abs(cov(dfv[S_rob$best, colnums]))))
+  abline(0,1)
 ```
 
 ### Plot univariate Distributions of Two Ref model
@@ -201,7 +305,7 @@ Darren this is the code chunck you want
 
 ### Plot Two Ref example: compare default and mcd covariance ####
 
-```{r}
+```{r, fig.height=8, fig.width=12}
 #png("figures_man1/TwoRef_log_var.png", width=10, height=8, res=450, units="in")
 makeplot <- function(dfv2.out){
    par(mfrow=c(2,2), mar=c(3,4,1,1), bty="l")
@@ -228,9 +332,34 @@ makeplot <- function(dfv2.out){
       text(30,max(log(dfv2.out$Nd), na.rm=TRUE)*0.95,round(getEmpPower(dfv2.out$Nd,dfv2.out$s_high==0),2))
 }#end funciton
 
-makeplot(dfv2.out)
+makeplot(dfv3.out) # raw
 
-makeplot(dfv4.out)
+makeplot(dfv5.out) # MCD cov
 
+makeplot(dfv6.subset) # MCD cov and "core" points
+
+```
+
+```{r}
+# compare results
+par(mfrow=c(1,1), mar=c(4,4,4,1))
+
+plot(log(dfv3.out$Md), log(dfv5.out$Md), pch=pch, col=col, main="Md using all data vs. using MCD cov and mean")
+abline(0,1, col="black", lwd=2)
+
+plot(log(dfv2.out$Hd), log(dfv5.out$Hd), pch=pch, col=col,
+     main = "Hd using all data vs MCD estimate")
+abline(0,1, col="black", lwd=2)
+plot(log(dfv5.out$Hd), log(dfv6.subset$Hd), pch=pch, col=col,
+     main = "Hd using MCD cov vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
+
+plot(log(dfv5.out$Kd), log(dfv6.subset$Kd), pch=pch, col=col,
+     main = "Kd using MCD cov vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
+
+plot(log(dfv5.out$Nd), log(dfv6.subset$Nd), pch=pch, col=col,
+     main = "Nd using MCD cov vs using\nMCD cov and robust points")
+abline(0,1, col="black", lwd=2)
 ```
 

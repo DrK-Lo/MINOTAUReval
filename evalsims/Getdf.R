@@ -11,7 +11,7 @@
 # colnums <- c(10,11,12,15)
 #source("misc/evalsims/distanceFunctionsOther.R")
 
-Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
+Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv)){
   ### Check for duplicated rows and abort
   if (any(duplicated(dfv))) {
     writeLines("Error: Your data frame has duplicated rows")
@@ -50,7 +50,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
 
   writeLines("Calculating outlierliness based on Mahalanobis distance...")
     x<- system.time({
-      tx <- try(Md <- Mahalanobis(dfv2, S=S))
+      tx <- try(Md <- Mahalanobis(dfv2, S=S, M=M))
       if("try-error" %in% class(tx)){
         Md <- NA}
       })
@@ -58,7 +58,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
 
   writeLines("Calculating outlierliness based on harmonic mean of euclidean distance correcting for covariances...")
     x<- system.time({
-      tx <- try(Hd <- harmonicDist(dfv2,S=S))
+      tx <- try(Hd <- harmonicDist(dfv2,S=S, subset=subset))
       if("try-error" %in% class(tx)){
         Hd <- NA}
       })
@@ -67,15 +67,15 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
 
   writeLines("Calculating outlierliness based on kernel density and given bandwith (assume covar)...")
     x<- system.time({
-      bw <- c(seq(0.01,0.1,by=0.01),seq(0.2,1,by=0.1))
+      bw <- c(seq(0.01,0.1,by=0.01),seq(0.2,1,by=0.1), seq(1.5,5,by=0.5))
       #plot(bw, Kd.ML)
      tx <- try({
-      Kd.ML <- kernelDeviance(dfv2, bandwidth = bw, S=S)
+      Kd.ML <- kernelDeviance(dfv2, bandwidth = bw, S=S, subset=subset)
       plot(bw, log(Kd.ML,10))
       print(cbind(bw, log(Kd.ML,10)))
       bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]]
       print(bw.best)
-      Kd <- kernelDist(dfv2, bandwidth = bw.best)
+      Kd <- kernelDist(dfv2, bandwidth = bw.best, subset=subset)
       })
      if("try-error" %in% class(tx)){Kd <- NA}
     })
@@ -84,7 +84,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL){
   
     writeLines("Calculating outlierliness based on euclidean distance to nearest neighbor (cov)...")
     x<- system.time({
-      tx <- try(Nd <- neighborDist(dfv2, S=S))
+      tx <- try(Nd <- neighborDist(dfv2, S=S, subset=subset))
       if("try-error" %in% class(tx)){
         Nd <- NA}
       })

@@ -6,7 +6,7 @@ output: html_document
 ---
 ### Load packages and data
 ```{r setup, include=FALSE}
-setwd("/Users/katie/Desktop/MINOTAUReval")
+#setwd("/Users/katie/Desktop/MINOTAUReval")
 source("evalsims/ComparePlot2.R")
 source("evalsims/distanceFunctionsOther.R")
 source("evalsims/getEmpiricalP2.R")
@@ -26,7 +26,7 @@ library(devtools)
 install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
 library(MINOTAUR)
 
-headdir <- "~/Google Drive/MultiOutlierVisualization/practiceData/KatieSims/"
+headdir <- "data/KatieSims/"
 resultsdir <- "~/Desktop/MINOTAUReval/results/"
 filelist <- list.files(headdir)
 filelist <- filelist[-55]
@@ -84,14 +84,22 @@ for (i in 1:length(filelist)){
      abline(lm(mcd~neut), col="orange")
 
     ### Get stats based on mcd covmat
-    dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov)
+    dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov, M=S_mcd@center)
     head(dat.out)
     colnames(dat.out)[(ncol(dat.out)-3):
                                ncol(dat.out)] <-
     c( "Md.mcd", "Hd.mcd", "Kd.mcd", "Nd.mcd") 
      head(dat.out)
+     
+    ### Get stats based on mcd covmat and robust points
+    dat.out.subset <- Getdf(dat.out, cols, S=S_mcd@cov,  M=S_mcd@center, subset=S_mcd@best)
+    head(dat.out.subset)
+    colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
+                               ncol(dat.out.subset)] <-
+    c( "Md.mcd.subset", "Hd.mcd.subset", "Kd.mcd.subset", "Nd.mcd.subset") 
+     head(dat.out.subset)
 
-
+    dat.out <- dat.out.subset
   ### Make plots ####
 #    pdf(file = paste(outfile, ".pdf", sep=""),width = 4, height=6)
 #      par(mfrow=c(2,1), mar=c(4,4,1,1), oma=c(0,0,2,1))
@@ -112,14 +120,21 @@ for (i in 1:length(filelist)){
              lfmm.ep = getEmpPower(dat.out$TW.Zscore, dat.out$s_high==0),
              Hcd.ep = getEmpPower(dat.out$Hcd, dat.out$s_high==0),
              pcs.ep = getEmpPower(dat.out$pcs, dat.out$s_high==0),
+             
              Md.default.ep = getEmpPower(dat.out$Md.default, dat.out$s_high==0),
              Hd.default.ep = getEmpPower(dat.out$Hd.default, dat.out$s_high==0),
              Kd.default.ep = getEmpPower(dat.out$Kd.default, dat.out$s_high==0),
              Nd.default.ep = getEmpPower(dat.out$Nd.default, dat.out$s_high==0),
+             
              Md.mcd.ep = getEmpPower(dat.out$Md.mcd, dat.out$s_high==0),
              Hd.mcd.ep = getEmpPower(dat.out$Hd.mcd, dat.out$s_high==0),
              Kd.mcd.ep = getEmpPower(dat.out$Kd.mcd, dat.out$s_high==0),
-             Nd.mcd.ep = getEmpPower(dat.out$Nd.mcd, dat.out$s_high==0)
+             Nd.mcd.ep = getEmpPower(dat.out$Nd.mcd, dat.out$s_high==0),
+              
+             Md.mcd.subset.ep = getEmpPower(dat.out$Md.mcd.subset, dat.out$s_high==0),
+             Hd.mcd.subset.ep = getEmpPower(dat.out$Hd.mcd.subset, dat.out$s_high==0),
+             Kd.mcd.subset.ep = getEmpPower(dat.out$Kd.mcd.subset, dat.out$s_high==0),
+             Nd.mcd.subset.ep = getEmpPower(dat.out$Nd.mcd.subset, dat.out$s_high==0)           
     )
   summarydf <- rbind(summarydf,out)
 }
