@@ -63,7 +63,7 @@
 #' @export
 
 
-flex_manhattan <- function(x, chr="CHR", bp="BP", stat="P", snp="SNP", 
+flex_manhattan2 <- function(x, chr="CHR", bp="BP", stat="P", snp="SNP", 
                       col=c("gray10", "gray60"), alpha=NULL, chrlabs=NULL,
                       outThresh1=NULL, outType1="two-tail", 
                       outThresh2=NULL, outType2="two-tail", outData=NULL,
@@ -287,8 +287,11 @@ flex_manhattan <- function(x, chr="CHR", bp="BP", stat="P", snp="SNP",
       row = high_reg[i,]
       d.region=d[which(d$CHR %in% row[,1]), ]
       d.region=subset(d.region, BP >= row[,2] & BP <= row[,3])
-      with(d.region, points(pos, logp, col=high_reg_col, pch=17, cex=1.5, ...))
-    }
+      #with(d.region, points(pos, logp, col=high_reg_col, pch=17, cex=1.5, ...))
+      # edits by KEL
+      #polygon(c(d.region$pos[1],d.region$pos[length(d.region$pos)], d.region$pos[1], d.region$pos[length(d.region$pos)]), c(0,0,10,10), col=rgb(1,0,1,0.5))
+      lines(c(d.region$pos[1],d.region$pos[1]), c(-100,100), col="magenta", lwd=2.5)
+      }
   }
   
   # Highlight snps from a dataframe of positions (2 columns)

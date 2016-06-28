@@ -101,7 +101,7 @@ for (i in 1:length(filelist)){
      head(dat.out)
      
     ### Get stats based on mcd covmat and robust points
-    dat.out.subset <- Getdf(dat.out, cols, S=S_mcd75@cov,  M=S_mcd75@center, subset=which(S_mcd@raw.wt==1))
+    dat.out.subset <- Getdf(dat.out, cols, S=S_mcd75@cov,  M=S_mcd75@center, subset=which(S_mcd75@raw.wt==1))
     head(dat.out.subset)
     colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
                                ncol(dat.out.subset)] <-

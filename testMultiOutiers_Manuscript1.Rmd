@@ -219,29 +219,28 @@ plot1 <- function(){
 plot1()
 
 ### Add classical covariance
-
-plot2 <- function(){
-  C.ls <- cov(X) ; m.ls <- colMeans(X)
   d2.99 <- qchisq(0.99, df = 2)
+    C.ls <- cov(X) ; m.ls <- colMeans(X)
+plot2 <- function(){
   lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="black", lwd=2)
   text(0.2, 25, "All data")
 }
   plot1(); plot2()
   
 ### Add classical covariance of neutral loci
-plot3 <- function(){
-  C.ls <- cov(X[dfv$s_high==0,]) ; m.ls <- colMeans(X[dfv$s_high==0,])
+    C.ls2 <- cov(X[dfv$s_high==0,]) ; m.ls2 <- colMeans(X[dfv$s_high==0,])
   d2.99 <- qchisq(0.99, df = 2)
-  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="blue", lwd=2)
+plot3 <- function(){
+  lines(ellipsoidPoints(C.ls2, d2.99, loc=m.ls2), col="blue", lwd=2)
   text(0.25, 32, "Neutral only", col="blue", adj=0)
 }
   plot1(); plot2(); plot3()
 
 
 ### Add robust covariance to plot
- 
+  Cxy <- CovNAMcd(X, alpha=0.75) 
 plot4 <- function(){
-  Cxy <- CovNAMcd(X, alpha=0.75)#cov.rob(X)
+#cov.rob(X)
   #str(Cxy)
   #lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
   lines(ellipsoidPoints(Cxy@cov, d2 = d2.99, loc=Cxy@center), col="magenta", lwd=3)

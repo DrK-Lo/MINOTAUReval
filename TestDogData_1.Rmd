@@ -43,11 +43,12 @@ The following chunk of code does for each dataset:
 3) calculate multivariate distances based on MCD covariance matrix
 
 
-```{r}
+```{r loop}
 for (i in 1:length(filelist)){
   print(c(i, filelist[i]))
   infile <- paste(headdir, filelist[i], sep="")
   dat <- read.csv(infile, header=TRUE)
+  head(dat)
   cols <- which(names(dat) %in% c("unstd_iHS", 
                                   "unstd_nSL",
                                   "win51_pi",
@@ -55,7 +56,7 @@ for (i in 1:length(filelist)){
                                   "win51_H12"))
     # don't include H: makes cov matrix singular
   cols
-  dat2 <- dat
+  dat2 <- dat[complete.cases(dat),]# #don't use complete cases if want to keep all data
   
   ### Get stats based on covmat of all the data
   dat.out.defaultS <- Getdf(dat2, cols)
@@ -69,24 +70,42 @@ for (i in 1:length(filelist)){
 
     # Covariance of all loci
     Sall <- cov(dat2[complete.cases(dat2),cols])
-    
+    Sall
     # Covariance of MCD
-    S_mcd <- CovNAMcd(dat2[,cols])
-    S_mcd
+    S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
+    S_mcd75
     
     par(mar=c(4,4,1,1))
-    plot(S_mcd@cov, Sall)
+    plot(S_mcd75@cov, Sall)
     abline(0,1)
     
     ### Get stats based on mcd covmat
-    dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov)
-    (dat.out[100:120,])
-    colnames(dat.out)[(ncol(dat.out)-3):
-                               ncol(dat.out)] <-
-    c( "Md.mcd", "Hd.mcd", "Kd.mcd", "Nd.mcd") 
-     head(dat.out)
-
-  write.csv(dat.out, file = paste(outdir,"set1_", filelist[i], sep=""))
+    #dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd75@cov, M=S_mcd75@center)
+    #(dat.out[100:120,])
+    #colnames(dat.out)[(ncol(dat.out)-3):
+    #                           ncol(dat.out)] <-
+    #c( "Md.mcd", "Hd.mcd", "Kd.mcd", "Nd.mcd") 
+    # head(dat.out)
+     
+     ### Get stats based on mcd covmat and robust points
+    dat.out.subset <- Getdf(dat.out.defaultS, cols, S=S_mcd75@cov,  M=S_mcd75@center, subset=which(S_mcd75@raw.wt==1))
+    #head(dat.out.subset)
+    colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
+                               ncol(dat.out.subset)] <-
+    c( "Md.mcd.subset", "Hd.mcd.subset", "Kd.mcd.subset", "Nd.mcd.subset") 
+     dat.out.subset$robust <- S_mcd75@raw.wt==1
+     
+          head(dat.out.subset)
+  
+    #plot(dat.out.subset$Md.mcd.subset)
+    #plot(dat.out.subset$Hd.mcd.subset)
+    #plot(log(dat.out.subset$Kd.mcd.subset))
+    
+    #plot(dat.out.subset$Nd.default)
+    #plot(dat.out.subset$Nd.mcd.subset)
+    #points(dat.out.subset$Nd.mcd.subset[S_mcd75@raw.wt==1], col="magenta", pch=19, cex=0.1)
+      
+  write.csv(dat.out.subset, file = paste(outdir,"set1_", filelist[i], sep=""))
 }
 
 
