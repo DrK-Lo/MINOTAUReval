@@ -17,9 +17,9 @@ sapply(AllObservedValues, getEmpP, sort(NonCodingValues))
 }
 
 
-getEmpPower_Q <- function(stat, neut.logic){
+getEmpPower <- function(stat, neut.logic){
     #x <- qvalue(1-returnEmpP(stat, stat[neut.logic]))$q<0.01
-    x <- qvalue(1-returnEmpP(stat, stat[neut.logic]))$q<0.05
+    x <- p.adjust(1-returnEmpP(stat, stat[neut.logic]), method="BH")<0.05
     t.power <- table(x, neut.logic)#table(x, dat.out$s_high)
     t.power[2,1]/sum(t.power[,1])
 }
