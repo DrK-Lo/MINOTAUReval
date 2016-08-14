@@ -10,12 +10,12 @@ output: html_document
 ### Make summary plots
 ```{r}
 
-summarydf <- read.table("results/LandsharcSummary.txt", header=TRUE)
+summarydf <- read.table("results/LandsharcSummary2.txt", header=TRUE)
 colnames(summarydf)<-sub(".ep", "",colnames(summarydf))
 head(summarydf)
+summarydf$demog <- factor(summarydf$demog, levels=c("IM", "IBD", "1R", "2R"))
 
-
- stats <- c(3:6,9:12,13:16, 17:20)
+ stats <- c(3:6,10:13,14:17, 18:21)
     names2 <- names(summarydf)[stats]
     names2[5:16] <- c("Md", "Hd", "Kd", "Nd")
     colors <- c(rep("grey60", 4), rep("lightblue",4), rep("blue",4), rep("magenta",4))
@@ -27,64 +27,166 @@ head(summarydf)
     text(14.5, 0.9, "Multivariate\nMCD cov &\nrobust points", cex=1.1, col="magenta") 
   }
   
+cond_alpha <- summarydf$alpha==0.75  
 pdf("results/LandsharcSummary.pdf", width = 15, height = 12)
     par(mfrow=c(4,1), mar=c(1,3,1,1),oma=c(1,3,1,0), cex=1.0)
     x <- 0.5
     y <- 1.1
    
-    boxplot(summarydf[summarydf$demog=="IM",stats], col=colors,
+    boxplot(summarydf[summarydf$demog=="IM" & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
     text(x,y, "IM", cex=2)
     addtext()
     
-    boxplot(summarydf[summarydf$demog=="IBD",stats], col=colors,
+    boxplot(summarydf[summarydf$demog=="IBD"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
     text(x,y, "IBD", cex=2)
     #addtext()
     
-    boxplot(summarydf[summarydf$demog=="1R",stats], col=colors,
+    boxplot(summarydf[summarydf$demog=="1R"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
     text(x,y, "1R", cex=2)
     #addtext()
     
-    boxplot(summarydf[summarydf$demog=="2R",stats], col=colors,
+    boxplot(summarydf[summarydf$demog=="2R"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
     text(x,y, "2R", cex=2)
     mtext("Empirical Power", side=2, outer=TRUE)
     #addtext()
     
 dev.off()
-# colMeans(summarydf[summarydf$demog=="IM",3:10])
-# colMeans(summarydf[summarydf$demog=="IBD",3:10])
-# colMeans(summarydf[summarydf$demog=="1R",3:10])
-# colMeans(summarydf[summarydf$demog=="2R",3:10])
+```
 
-library(vioplot)
+Make plot of proportion of selected loci identified as robust
+```{r}
+head(summarydf)
+attach(summarydf)
 
-pdf("results/LandsharcSummary_MdHd.pdf", width = 10, height =8)
-    par(mfrow=c(4,1), mar=c(1,3,1,1),oma=c(1,3,1,0), cex=1.0)
-    x <- 0.5
-    y <- 1.1
-    stats <- c(9:10,13:14, 17:18)
-    #colors <- c(rep("magenta",4), 
-    colors <- c(rep("lightblue",2), rep("blue",2), rep("magenta",2))
-    # vioplot(summarydf[summarydf$demog=="1R",stats[1]],
-    #         summarydf[summarydf$demog=="1R",stats[2]],
-    #         summarydf[summarydf$demog=="1R",stats[3]],
-    #         summarydf[summarydf$demog=="1R",stats[4]],
-    #         ylim=c(0,1.2), col = colors)
-    boxplot(summarydf[summarydf$demog=="IM",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "IM", cex=1.3)
-    boxplot(summarydf[summarydf$demog=="IBD",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "IBD", cex=1.3)
-    boxplot(summarydf[summarydf$demog=="1R",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "1R", cex=1.3)
-    boxplot(summarydf[summarydf$demog=="2R",stats], col=colors,
-            ylim=c(0,1.2))
-    text(x,y, "2R", cex=1.3)
-    mtext("Empirical Power", side=2, outer=TRUE)
+tapply(summarydf$ProportionS0.005MCDRobust, list(summarydf$demog, summarydf$alpha), mean)
+tapply(summarydf$ProportionS0.01MCDRobust, list(summarydf$demog, summarydf$alpha), mean)
+tapply(summarydf$ProportionS0.1MCDRobust, list(summarydf$demog, summarydf$alpha), mean)
+
+# For IBD, the data set included four strengths of selection in each demography at the following percentages: sL = 0.001 (40% of the loci), sL = 0.005 (30%), sL = 0.01 (20%) and sL = 0.1 (10%). For IM, 1R and 2R, the data set included three strengths of selection at the following percentages: sL = 0.005 (50%), sL = 0.01 (33%) and sL = 0.1 (17%).
+
+MakeExpectPlot <- function(demo){
+    # demo is a character of the demography ("IM")
+    boxplot(summarydf$ProportionS0.005MCDRobust[summarydf$demog==demo]~summarydf$alpha[summarydf$demog==demo], las=1, ylim=c(0,0.006))
+    abline(100/10000*0.5,0, col="blue", lwd=2, lty=2)
+    mtext(demo, side=2, line=4, las=1)
+    if(demo=="IM"){
+      mtext("s=0.005", side=3,  las=1)
+    }
+    boxplot(summarydf$ProportionS0.01MCDRobust[summarydf$demog==demo]~summarydf$alpha[summarydf$demog==demo], las=1, ylim=c(0,0.006))
+    abline(100/10000*0.33,0, col="blue", lwd=2, lty=2)
+    if(demo=="IM"){
+      mtext("s=0.01", side=3, las=1)
+    }
+}
+
+pdf("results/LandsharcProportionSelectedMCD.pdf", width=5, height=8)
+  par(mfrow=c(4,2), oma=c(4,6,2,0), mar=c(2,4,0,0.1))
+  MakeExpectPlot("IM")
+      boxplot(summarydf$ProportionS0.005MCDRobust[summarydf$demog=="IBD"]~summarydf$alpha[summarydf$demog=="IBD"], las=1, ylim=c(0,0.004))
+      abline(100/10000*0.3,0, col="blue", lwd=2, lty=2)
+      mtext("IBD", side=2, line=4, las=1)
+      boxplot(summarydf$ProportionS0.01MCDRobust[summarydf$demog=="IBD"]~summarydf$alpha[summarydf$demog=="IBD"], las=1, ylim=c(0,0.004))
+      abline(100/10000*0.2,0, col="blue", lwd=2, lty=2)
+  MakeExpectPlot("1R")
+  MakeExpectPlot("2R")
+  mtext("Proportion of selected loci identified as `robust` by MCD", side=2, outer=TRUE, line=4)
+  mtext("Proportion of loci in dataset\nused for MCD", side=1, outer=TRUE, line=3)
 dev.off()
 ```
+
+Make plot of false positives if robust points are used as an empirical null distribution
+```{r}
+MakeFPPlot <- function(demo){
+    # demo is a character of the demography ("IM")
+    boxplot(summarydf$Md.mcd.subset.fp[summarydf$demog==demo]~summarydf$alpha[summarydf$demog==demo], las=1, ylim=c(0,0.25))
+    mtext(demo, side=2, line=4, las=1)
+}
+
+  par(mfrow=c(4,1), oma=c(4,6,2,0), mar=c(2,4,0,0.1))
+  MakeFPPlot("IM")
+  MakeFPPlot("IBD")
+  MakeFPPlot("1R")
+  MakeFPPlot("2R")
+```
+
+All of the domgraphies have similar false positive rates. Make one plot for pub.
+
+```{r}
+pdf("results/LandsharcFalsePositivesMCD.pdf", width=3, height=3)
+  par(mar=c(4,4,1,1), mfrow=c(1,1), oma=c(0,0,0,0))
+  boxplot((summarydf$Md.mcd.subset.fp*9900)~summarydf$alpha, las=1, ylab="Number of false discoveries", xlab="Proportion of loci in dataset\nused for MCD")
+  dev.off()
+```
+
+Next, compare the difference in the covariance matrix based on neutral loci only to (i) that based on all the data, and (ii) that based on the MCD.
+```{r}
+MakeComparePlot <- function(demo, letter){
+    # demo is a character of the demography ("IM")
+    data1 <- summarydf$Neut.cov.vs.All[demog==demo & alpha==0.75]
+      #(alpha is meaningless in this case)
+    data2 <- summarydf$Neut.cov.vs.MCD[demog==demo & alpha==0.75]
+    data3 <- summarydf$Neut.cov.vs.MCD[demog==demo & alpha==0.99]
+    factor <- c(rep("All data", length(data1)), rep("MCD 0.75", length(data2)),  rep("MCD 0.99", length(data3)))
+    diff <- c(data1,data2,data3)
+    if(demo=="2R"){
+     boxplot(diff ~ factor, las=1, ylim=c(0,3), cex.axis=1.5)     
+    }else{
+    boxplot(diff ~ factor, las=1, ylim=c(0,3), cex.axis=1.5, 
+names=c("","",""))
+    }
+    #mtext(demo, side=2, line=4, las=1)
+    text(3,2.5, paste(letter, ". ", demo, sep=""), cex=2)
+}
+par(mfrow=c(4,1), mar=c(1,4,0,0), oma=c(2,4,1,1))
+  MakeComparePlot("IM", "A")
+  MakeComparePlot("IBD", "B")
+  MakeComparePlot("1R", "C")
+  MakeComparePlot("2R", "D")
+```
+
+Similar results were found for all demographies. Make single plot for pub.
+```{r}
+  data1 <- summarydf$Neut.cov.vs.All[alpha==0.75]
+      #(alpha is meaningless in this case)
+  data2 <- summarydf$Neut.cov.vs.MCD[alpha==0.75]
+  data3 <- summarydf$Neut.cov.vs.MCD[alpha==0.99]
+  factor <- c(rep("All data", length(data1)), rep("MCD 0.75", length(data2)),  rep("MCD 0.99", length(data3)))
+   diff <- c(data1,data2,data3)
+
+pdf("results/LandsharcCompareToNeutralCovMat.pdf", width=5, height=3)
+  par(mfrow=c(1,1), mar=c(3,5,1,1), oma=c(0,0,0,0))
+  boxplot(diff~factor, ylab="Mean difference with covariance\nmatrix based on neutral loci", las=1)
+dev.off()
+```
+
+
+# pdf("results/LandsharcSummary_MdHd.pdf", width = 10, height =8)
+#     par(mfrow=c(4,1), mar=c(1,3,1,1),oma=c(1,3,1,0), cex=1.0)
+#     x <- 0.5
+#     y <- 1.1
+#     stats <- c(9:10,13:14, 17:18)
+#     #colors <- c(rep("magenta",4), 
+#     colors <- c(rep("lightblue",2), rep("blue",2), rep("magenta",2))
+#     # vioplot(summarydf[summarydf$demog=="1R",stats[1]],
+#     #         summarydf[summarydf$demog=="1R",stats[2]],
+#     #         summarydf[summarydf$demog=="1R",stats[3]],
+#     #         summarydf[summarydf$demog=="1R",stats[4]],
+#     #         ylim=c(0,1.2), col = colors)
+#     boxplot(summarydf[summarydf$demog=="IM",stats], col=colors,
+#             ylim=c(0,1.2))
+#     text(x,y, "IM", cex=1.3)
+#     boxplot(summarydf[summarydf$demog=="IBD",stats], col=colors,
+#             ylim=c(0,1.2))
+#     text(x,y, "IBD", cex=1.3)
+#     boxplot(summarydf[summarydf$demog=="1R",stats], col=colors,
+#             ylim=c(0,1.2))
+#     text(x,y, "1R", cex=1.3)
+#     boxplot(summarydf[summarydf$demog=="2R",stats], col=colors,
+#             ylim=c(0,1.2))
+#     text(x,y, "2R", cex=1.3)
+#     mtext("Empirical Power", side=2, outer=TRUE)
+# dev.off()
