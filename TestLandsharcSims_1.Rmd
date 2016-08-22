@@ -15,10 +15,6 @@ source("evalsims/Getdf.R")
 
 if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
 if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
-if(!("qvalue" %in% installed.packages())){
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("qvalue")
-  }
 
 library(qvalue)
 library(rrcovNA)
