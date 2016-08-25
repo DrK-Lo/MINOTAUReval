@@ -4,12 +4,15 @@ author: "Katie Lotterhos"
 date: "May 24, 2016"
 output: html_document
 ---
+
 ### Load packages and data
 ```{r setup, include=FALSE}
+makeplots=FALSE
+
 #setwd("/Users/katie/Desktop/MINOTAUReval")
 source("evalsims/ComparePlot2.R")
 source("evalsims/distanceFunctionsOther.R")
-source("evalsims/getEmpiricalP2.R")
+source("evalsims/getEmpiricalP3_BH.R")
 source("evalsims/Getdf.R")
 
 if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
@@ -24,11 +27,13 @@ library(rrcovNA)
 library(devtools)
 #install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
 library(MINOTAUR)
+library(plyr)
 
 headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"
-outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_nSL_pi_TD_H12/"
+outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_pi_TD_H12/"
 #resultsdir <- "~/Desktop/MINOTAUReval/results/"
-filelist <- list.files(outdir)
+filelist <- list.files(outdir, pattern = "set1")
+filelist
 length(filelist)
 if (!length(filelist)==25){print("Errr: missing simulation files")}
 
@@ -51,39 +56,46 @@ The following chunk of code does for each dataset:
 I got frustrated with flex_manhattan2.  First, it doesn't plot SNPs according to their genomic position; it plots them according to index.
 
 ```{r loop}
-for (i in 11:11){#:length(filelist)){
+for (i in 1:length(filelist)){
+  print("-----------------------------------")
+  print("-----------------------------------")
+  print("-----------------------------------")
   print(c(i, filelist[i]))
   infile <- paste(outdir, filelist[i], sep="")
   dat <- read.csv(infile, header=TRUE)
+  dim(dat)
   head(dat)
   dat <- dat[order(dat$chr, dat$bp),]
   
   (focal_snps <- genelist[,c("chr","start","end", "SNP", col_match[i])])
   (sel_snps <- focal_snps[focal_snps[,5]>0.5,c("chr","SNP")])
-  (sel_region <- focal_snps[focal_snps[,5]>0.5,c("chr","start", "end")])
+  #(sel_region <- focal_snps[focal_snps[,5]>0.5,c("chr","start", "end")])
   print(sel_snps)
-  print(sel_region)
+  #print(sel_region)
 
-  library(plyr)
+  # change chromosome to a number for analysis
    chr <- levels(factor(dat$chr))
    dat$loc <- as.factor(dat$chr)
-   dat$loc <-mapvalues(dat$loc, from= chr, to= 1:length(chr))
+   dat$loc <- mapvalues(dat$loc, from= chr, to= 1:length(chr))
    tail(dat$loc)
 
-  dat2 <- NULL
-   for (j in seq_along(chr)){
-    bob <- dat[dat$loc==j,]
-    dat2 <- rbind(dat2, bob[-c((nrow(bob)-200):nrow(bob)),])
-   }
-  # remove ends of chromosome where maybe low recomb?
-  dat <- dat2
+  #### remove ends of chromosome
+  # dat2 <- NULL
+  #  for (j in seq_along(chr)){
+  #   bob <- dat[dat$loc==j,]
+  #   dat2 <- rbind(dat2, bob[-c((nrow(bob)-200):nrow(bob)),])
+  #  }
+  # 
+  # dat <- dat2
 
+  ### Set colors for Manhattan plot
    dat$col <- as.character("n")
    dat$bp2 <- c()
    for (j in seq_along(chr)){
      if (j %% 2 ==0){dat$col[dat$loc==j] <- rgb(0,0,0,0.5)}else{dat$col[dat$loc==j] <- rgb(0.5,0.5,0.5,0.5)}
      bob <- dat$bp[dat$loc==j] - min(dat$bp[dat$loc==j])
      dat$bp2[dat$loc==j] <- bob/max(bob)*0.95
+       # this is just a transformation of bp to a fraction for plotting
      #hist(dat$bp[dat$loc==j])
    }
   #plot(dat$unstd_iHS, col=dat$col, pch=19, xaxt="n", bty="l", cex=0.3)
@@ -94,8 +106,100 @@ for (i in 11:11){#:length(filelist)){
   
   x <- 1:nrow(dat)
   
+  ### Function to determine power to detect known loci
+  getPower <- function(column, upper=TRUE){
+    # upper=TRUE tests for outliers in the upper 95%
+    # upper=FALSE tests for outliers lower 5% of the test statistic
+    # 25 SNPs tested on either side of SNP
+    variable <- dat[,column]
+    print(names(dat)[column])
+    if (upper){
+      (CI <- sort(variable)[length(variable)*0.95])
+    }
+    if (!upper){
+      CI <- sort(variable)[length(variable)*0.05]
+    }
+    
+    row <- CI_out <- CI_robust_75 <- CI_robust_99 <- c()
+    for (k in 1:nrow(sel_snps)){
+        row[k] <- which(dat$chr == sel_snps$chr[k] 
+                        & dat$bp > sel_snps$SNP[k])[1]
+        cond <- (row[k]-25):(row[k]+25)
+        
+        if(upper){
+          CI_out[k] <- sum((variable[cond]) > CI)>5
+          var_75 <- max(variable[dat$robust75])
+          var_99 <- max(variable[dat$robust99])
+            # at least one SNP in window has a signal
+            # greater than the criteria
+          CI_robust_75[k] <- sum((variable[cond]) >
+                                   var_75) >5
+          CI_robust_99[k] <- sum((variable[cond]) >
+                                   var_99) >5
+        }# end if upper
+
+        if (!upper){
+          CI_out[k] <- sum((variable[cond]) < CI)>5
+                # at least five SNPs in window has a signal
+                # greater than the criteria
+          var_75 <- min(variable[dat$robust75])
+          var_99 <- min(variable[dat$robust99])
+          CI_robust_75[k] <- sum((variable[cond]) <
+                                   var_75) >5
+          CI_robust_99[k] <- sum((variable[cond]) <
+                                      var_99) >5
+        }# end if !upper
+    }# end loop though focal SNPs
+    out=data.frame(CI_out, CI_robust_75, CI_robust_99)
+    print(out)
+    power = colSums(out)/nrow(out)
+    power.out = data.frame(cutoff.CI=CI, cutoff.robust75=var_75, 
+                     cutoff.robust99=var_99,
+                     power.CI=power[1],
+                      power.robust75=power[2],
+                      power.robust99=power[3]
+    )
+    return(power.out)
+  }
+  ### End function
   
-  # this makes a manhattan plot and adds the known genes
+  ### Get power
+  whichcols <- which(names(dat) %in% c("unstd_iHS", "win51_H12", 
+                 "pcs.default","Hcd.default", 
+                 "Md.default", "Hd.default",
+                 "Kd.default", "Nd.default", 
+                 "Md.mcd.subset.75", "Hd.mcd.subset.75", 
+                 "Kd.mcd.subset.75", "Nd.mcd.subset.75",
+                 "Md.mcd.subset.99", "Hd.mcd.subset.99", 
+                 "Kd.mcd.subset.99", "Nd.mcd.subset.99")
+  )
+  a<- lapply(whichcols, getPower)
+  a<-data.frame(matrix(unlist(a), ncol = 6, byrow=TRUE))
+  names(a) <- names(getPower(7))
+  a$stat <- names(dat)[whichcols]
+  a$upper<-TRUE
+  a
+  
+  whichcolsMin <- which(names(dat) %in% c("win51_TajD", "win51_pi"))
+  b<-lapply(whichcolsMin, getPower, upper=FALSE)
+  b<-data.frame(matrix(unlist(b), ncol = 6, byrow=TRUE))
+  names(b) <- names(getPower(7))
+  b$stat <- names(dat)[whichcolsMin]
+  b$upper <- FALSE
+  final <- rbind(a,b)
+  
+  final$breed <- col_match[i]
+  
+  if(i==1){
+    write.table(final, file="results/dogBreedsPower.txt", append=FALSE, row.names=FALSE, col.names=TRUE)
+  }else{
+    write.table(final, file="results/dogBreedsPower.txt", append=TRUE, row.names=FALSE, col.names=FALSE)
+  }
+  
+  ### Plotting ###
+  ################
+  if(makeplots==TRUE){
+  ### this makes a manhattan plot and adds the known genes
   makeplot1 <- function(text, variable){
     # text is plotted on the y -axis
   plot(dat$pos, variable, col=dat$col, pch=19, xaxt="n", bty="l", cex=0.7, las=1, ylab=text, xlab="Chromosome", main=col_match[i])
@@ -106,11 +210,11 @@ for (i in 11:11){#:length(filelist)){
     axis(1,at=1.5:9.5,labels=chr)
   }
   
-  # this makes a manhattan plot and adds the known genes
-  # and highlights the robust points
-  makeplot2 <- function(text, variable){
+  ### this makes a manhattan plot and adds the known genes
+  ### and highlights the robust points
+  makeplot2 <- function(text, variable, whichrobust){
     plot(dat$pos,variable, col=dat$col, pch=19, cex=0.7, ylab=text, bty="l", xlab="Chromosome", las=1, main=col_match[i], xaxt="n")
-    points(dat$pos[dat$robust==TRUE],variable[dat$robust==TRUE], pch=19, cex=0.1, col="yellow")
+    points(dat$pos[whichrobust],variable[whichrobust], pch=19, cex=0.1, col="yellow")
     for (j in 1:nrow(sel_snps)){
      index <- which(dat$chr == sel_snps$chr[j] & dat$bp > sel_snps$SNP[j])[1]
      points(c(dat$pos[index], dat$pos[index]), c(-10,10), type="l", lwd=8, col=rgb(0,0,1,0.3))
@@ -118,48 +222,46 @@ for (i in 11:11){#:length(filelist)){
       axis(1,at=1.5:9.5,labels=chr)
   }
   
-  makeplot1("iHS", dat$unstd_iHS)
-  makeplot1("nSL", dat$unstd_nSL)
-  makeplot1(expression(pi), dat$win51_pi)
-  makeplot1("Tajima's D", dat$win51_TajD)
-  makeplot1("H12", dat$win51_H12)
+  make3 <- function(nombre, ko){
+    makeplot1(nombre, ko)
+    makeplot2(paste(nombre, "robust 75"), ko, which(dat$robust75))
+    makeplot2(paste(nombre, "robust 99"), ko, which(dat$robust99))
+  }
+  
+  dir.create(paste("results/dogbreeds/", col_match[i],"/", sep=""))
+  png(paste("results/dogbreeds/", col_match[i],"/",col_match[i], "%02d.png", sep=""),
+      width=8, height=3, units="in", res=300)
+  make3("iHS", dat$unstd_iHS)
+  make3(expression(pi), dat$win51_pi)
+  make3("Tajima's D", dat$win51_TajD)
+  make3("H12", dat$win51_H12)
+  
+  make3("Md.default", dat$Md.default)
+  make3("Md.mcd.subset.75", dat$Md.mcd.subset.75)
+  make3("Md.mcd.subset.99", dat$Md.mcd.subset.99)
 
+  make3("Hd.default", dat$Hd.default)
+  make3("Hd.mcd.subset.75", dat$Hd.mcd.subset.75)
+  make3("Hd.mcd.subset.99", dat$Hd.mcd.subset.99)
   
-  makeplot2("iHS", dat$unstd_iHS)
-  makeplot2("nSL", dat$unstd_nSL)
-  makeplot2(expression(pi), dat$win51_pi)
-  makeplot2("Tajima's D", dat$win51_TajD)  
-  makeplot2("H12", dat$win51_H12)    
-
-  dat$Kd.default.log <- log(dat$Kd.default,10)
-  dat$Kd.mcd.subset.log <- log(dat$Kd.mcd.subset,10)
+  make3("log(Kd.default)", log(dat$Hd.default,10))
+  make3("log(Kd.mcd.subset.75)", log(dat$Hd.mcd.subset.75,10))
+  make3("log(Kd.mcd.subset.99)", log(dat$Hd.mcd.subset.99,10))  
   
-  makeplot1("Md.default", dat$Md.default)
-  makeplot1("Md.mcd.subset", dat$Md.mcd.subset)
-  makeplot1("Hd.mcd.subset", dat$Hd.mcd.subset)
-  makeplot1("Kd.mcd.subset.log", dat$Kd.mcd.subset.log)
-  makeplot1("Nd.mcd.subset", dat$Nd.mcd.subset)   
+  make3("Nd.default", dat$Nd.default)
+  make3("Nd.mcd.subset.75", dat$Nd.mcd.subset.75)
+  make3("Nd.mcd.subset.99", dat$Nd.mcd.subset.99)
   
-  makeplot2("Md.default", dat$Md.default)
-  makeplot2("Md.mcd.subset", dat$Md.mcd.subset)
-  makeplot2("Hd.mcd.subset", dat$Hd.mcd.subset)
-  makeplot2("Kd.mcd.subset.log", dat$Kd.mcd.subset.log)
-  makeplot2("Nd.mcd.subset", dat$Nd.mcd.subset)  
-  
-  makeplot1("Hd.default", dat$Hd.default)
-  makeplot1("Kd.default.log", dat$Kd.default.log) 
-  makeplot1("Nd.default", dat$Nd.default)
-  
-  hist(dat$Md.default, breaks=100)
-  hist(dat$Md.mcd.subset, breaks=100)
-  hist(dat$Hd.default, breaks=100)
-  hist(dat$Hd.mcd.subset, breaks=100)
-  hist(dat$Kd.default.log, breaks=100)  
-  hist(dat$Kd.mcd.subset.log, breaks=100)
-  hist(dat$Nd.default, breaks=100) 
-  hist(dat$Nd.mcd.subset, breaks=100) 
-
-  
+  dev.off()
+  # hist(dat$Md.default, breaks=100)
+  # hist(dat$Md.mcd.subset, breaks=100)
+  # hist(dat$Hd.default, breaks=100)
+  # hist(dat$Hd.mcd.subset, breaks=100)
+  # hist(dat$Kd.default.log, breaks=100)  
+  # hist(dat$Kd.mcd.subset.log, breaks=100)
+  # hist(dat$Nd.default, breaks=100) 
+  # hist(dat$Nd.mcd.subset, breaks=100) 
+  }#end if makeplots
 }
 
 
