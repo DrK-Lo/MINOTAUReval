@@ -55,34 +55,23 @@ TEAM: Would anyone like to take on making a figure like this one, but better for
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=6in]{../figures_man2/F4-LandsharcSummary.pdf}
+\includegraphics[width=6in]{../figures_man2/F2-LandsharcSummary.pdf}
 \end{center}
 \caption[]{Comparison of univariate and multivariate statistics for their power to separate signals of selection from neutrality. Each row represents one of the simulated demographies (IM = Island Model, IBD = Isolation By Distance, 1R = range expansion from one refuge, 2R = range expansion from two refugia). The four univariate statistics (grey box plots) evaluated were: $X^TX$ (xtx), Bayes Factors (bf), Spearman's $\rho$, and  $Z$-scores (lfmm).} 
  \label{fig:???}
 \end{figure}
 
-\newpage
-\begin{figure}[h]
-\begin{center}
-\includegraphics[width=4in]{../figures_man2/F2-LandsharcCompareToNeutralCovMat.pdf}
-\end{center}
-\caption[]{Comparison of the mean absolute difference between the variance-covariance matrix among the univariate statistics calculated using (i) all the data, (ii) the MCD estimate using 75\% of the dataset, and (iii) the MCD estimate using 99\% of the dataset.  Boxplots are summarized over all demographies and sampling designs.
-
-{\bf TO DO: Should I switch MCD99 and MCD75 here, since MCD99 will be closer to "all data" than MCD75?}
-} 
- \label{fig:???}
-\end{figure}
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=6in]{../figures_man2/F1-CovEllipse_4NeutralMCDpoints.png}
+\includegraphics[width=6in]{../figures_man2/F3-CovEllipse_4NeutralMCDpoints.png}
 \end{center}
 \caption[]{Comparison of 99\% confidence intervals on the two dimensional ellipse given by the determinant on the covariance matrix between these two variables calculated from: (i) all the data, (ii) neutral loci only, and (iii) the MCD estimate. 
 
 {\bf TEAM: does this visualize that the robust points are neutral or is it unclear?
 
-TO DO: Need to add legend to this plot (neutral = grey, trianges = different strengths of selection, pink dots = robust points).  Replace "xtx" with $X^TX$ and rho with Spearman's $\rho$. Maybe change the colors so that neutral ellipse is black, and change the lines so that it works in BW.
+TO DO: Need to add legend to this plot (neutral = grey, triangles = different strengths of selection, pink dots = robust points).  Replace "xtx" with $X^TX$ and rho with Spearman's $\rho$. Maybe change the colors so that neutral ellipse is black, and change the lines so that it works in BW.
 }
 }
  \label{fig:???}
@@ -93,21 +82,21 @@ TO DO: Need to add legend to this plot (neutral = grey, trianges = different str
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[height=6in]{../figures_man2/F3-LandsharcProportionSelectedMCD.pdf}
+\includegraphics[width=4in]{../figures_man2/F4-DogPower_alpha075_title.pdf}
 \end{center}
-\caption[]{Evaluation of whether loci affected by selection were identified as 'robust' points (e.g., not outliers) by the MCD algorithm. Loci under relatively weak selection (s=0.005) are in the left column, well loci under moderate selection are in the right column (s=0.01). The horizontal dashed line represents the null expectation, based on the proportion of loci under that strength of selection in the entire dataset. The MCD never identified loci simulated under strong selection (s=0.1) as robust (expected = 0.001 in IBD and 0.0017 in IM, 1R, and 2R; observed = 0 across all simulations).} 
+\caption[]{Comparison of power of different univariate and multivariate statistics to detect known QTL in the dog dataset. Power was evaluated as the proportion of known QTL with a signal above the maximum value of that statistic at the robust points identified by the MCD with $\alpha=0.75$. Multivariate "default" was calculated using all the data, while "MCD" was calculated using the MCD estimates of multivariate mean and covariance as well as the robust points in the calculation, if applicable.  Statistics evaluated include integrated haplotype score (iHS), H12, Tajima's D (Taj. D), nucleotide diversity ($\pi$), Mahalanobis distance (Md), harmonic mean distance (Hd), kernel deviance (Kd), and nearest neighbor distance (Nd). } 
  \label{fig:???}
 \end{figure}
-
 
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/F5-LandsharcFalsePositivesMCD.pdf}
+\includegraphics[width=4in]{../figures_man2/F5-MalteseManhattan.pdf}
 \end{center}
-\caption[]{The number of false discoveries (neutral loci inferred to be outliers, out of 9900 total neutral loci in the dataset) resulting if robust points identified by the MCD are used as an empirical null distribution.} 
+\caption[]{Comparison of Manhattan plots for three univariate statistics (A) and the multivariate summary statistic of Mahalanobis distance (B). The points identified as robust in the MCD algorithm are highlighted in yellow. The vertical blue lines indicate the causal QTL that have risen to a frequency greater than 50\% in this breed, and the stars indicate whether that QTL is significantly greater than the threshold as described in the main text. The univariate statistics included in the multivariate calculation included integrated haplotype score (iHS), H12, Tajima's D, and nucleotide diversity ($\pi$, which is not plotted because it had no power to detect these QTL).} 
  \label{fig:???}
 \end{figure}
+
 
 \end{document}
