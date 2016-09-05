@@ -13,6 +13,7 @@
 
 Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv), 
                   whichstats=c("pcs", "hclust", "md", "hd", "kd", "nd")){
+ 
   ### Check for duplicated rows and abort
   if (any(duplicated(dfv))) {
     writeLines("Error: Your data frame has duplicated rows")
