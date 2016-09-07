@@ -15,16 +15,19 @@ colnames(summarydf)<-sub(".ep", "",colnames(summarydf))
 head(summarydf)
 summarydf$demog <- factor(summarydf$demog, levels=c("IM", "IBD", "1R", "2R"))
 
- stats <- c(3:6,10:13,14:17, 18:21)
+  names(summarydf)
+ stats <- c(3:6,10:13,18:21, 7:8)
+ names(summarydf)[stats]
     names2 <- names(summarydf)[stats]
-    names2[5:16] <- c("Md", "Hd", "Kd", "Nd")
-    colors <- c(rep("grey60", 4), rep("lightblue",4), rep("blue",4), rep("magenta",4))
-    
+    names2[5:12] <- c("Md", "Hd", "Kd", "Nd")
+    colors <- c(rep("grey60", 4), rep("lightblue",4), rep("magenta",4), rep("darkblue", 2))
+    names2
+      
   addtext <- function(){
     text(2.5, 0.9, "Univariate", cex=1.1)
-    text(6.5, 0.9, "Multivariate\nDefault", cex=1.1, col="darkblue")
-    text(10.5, 0.9, "Multivariate\nMCD cov", cex=1.1, col="blue")     
-    text(14.5, 0.9, "Multivariate\nMCD cov &\nrobust points", cex=1.1, col="magenta") 
+    text(6.5, 0.9, "Multivariate\nDefault", cex=1.1, col="lightblue")
+    text(10.5, 0.9, "Multivariate\nMCD", cex=1.1, col="magenta")     
+    text(14.5, 0.9, "Other", cex=1.1, col="darkblue") 
   }
   
 cond_alpha <- summarydf$alpha==0.75  
@@ -56,6 +59,122 @@ pdf("results/LandsharcSummary.pdf", width = 15, height = 12)
     
 dev.off()
 ```
+
+Make plot showing robust points in 2 dimensions
+```{r}
+d1 <- read.table("data/KatieSims/2R_R30_1351142970_988_6_NumPops=30_NumInd=20Bayenv2LFMMpca.Cpval", header=TRUE)
+  str(d1)
+  d1$cols <- as.character(d1$cols)
+  d1 <- d1[d1$SNPIncluded,]
+  dfv <- d1[,c(1,3,4,5,10,12,13,15:17,34)]
+  dim(dfv)
+  str(dfv)
+  names(dfv)
+  X <- dfv[,c(9:10)]
+  
+  ### Change the colors
+  d1$cols[d1$s_high==0.005] <- "lightblue"
+  d1$cols[d1$s_high==0.01] <- "blue"
+  d1$cols[d1$s_high==0.1] <- "darkblue"
+  
+plot1 <- function(){
+  par(mfrow=c(1,1), mar=c(4,4,1,1))
+  plot(X, col=rgb(0,0,0,0.05), pch=d1$pch1, xlim=c(-0.3,0.8), bty="l", ylim=c(20,80),
+       xlab=expression("Spearman's "*rho),
+       ylab=expression("X"^"T"*"X"))
+  points(X[9901:9999,], col=d1$cols[9901:9999], pch=d1$pch1[9901:9999], ylim=c(20,80))
+}
+plot1()
+
+library(cluster)
+library(MASS)
+library(rrcovNA)
+
+### Add classical covariance
+d2.99 <- qchisq(0.95, df = 2)
+
+    C.ls <- cov(X) ; m.ls <- colMeans(X)
+plot2 <- function(){
+  lines(ellipsoidPoints(C.ls, d2.99, loc=m.ls), col="blue", lwd=2)
+  text(0, 22, "All data", col="blue")
+}
+  plot1(); plot2()
+  
+### Add classical covariance of neutral loci
+    C.ls2 <- cov(X[dfv$s_high==0,]) ; m.ls2 <- colMeans(X[dfv$s_high==0,])
+plot3 <- function(){
+  lines(ellipsoidPoints(C.ls2, d2.99, loc=m.ls2), col="black", lwd=2)
+  text(0.22, 32, "Neutral only", col="black", adj=0)
+}
+  plot1(); plot2(); plot3()
+
+
+### Add robust covariance to plot
+  Cxy <- CovNAMcd(X, alpha=0.75) 
+plot4 <- function(){
+#cov.rob(X)
+  #str(Cxy)
+  #lines(ellipsoidPoints(Cxy$cov, d2 = d2.99, loc=Cxy$center), col="magenta", lwd=3)
+  lines(ellipsoidPoints(Cxy@cov, d2 = d2.99, loc=Cxy@center), col="magenta", lwd=3)
+  text(0.22, 29, "MCD estimate", col="magenta", adj=0)  
+}
+  plot1(); plot2(); plot3(); plot4()
+   
+### Add robust points to plot
+pdf("figures_man2/VizCovariance.pdf", width = 6, height=5)  
+  plot1(); plot2(); plot3(); plot4()
+  points(X[Cxy@raw.wt==1,], pch=19, cex=0.1, col=rgb(1,0,1,0.2))  
+  
+  #points(mean(X[,1]), mean(X[,2]), pch=8, col="blue")
+  #points(mean(X[d1$s_high==0,1]), mean(X[d1$s_high==0,2]), pch=8)
+  
+  levels(factor(d1$cols))
+
+  legend(-0.25, 80, c("Neutral", "s = 0.005",
+                     "s = 0.01","s = 0.1",
+                     "Robust"), pch=c(19, 17, 17, 17, 20),
+         col=c("#0000001A","lightblue", "blue",  "darkblue", "#FF00FF"), bty="n")
+dev.off()
+```
+
+
+Make plot comparing multivariate location and scatter - default vs. MCD vs. neutral
+```{r}
+mv <- read.csv("results/covsummaryLandsharc.csv", header=TRUE)
+mv <- mv[-1,]
+head(mv)
+
+demog <- sapply(strsplit(as.character(mv$filelist), "_"), function(x){x[1]})
+demog <- factor(demog, levels=c("IM", "IBD", "1R","2R"))
+(demoglevs <- levels(factor(demog)))
+
+### Compare with Neutral
+cond <- mv$Comparison1=="Neutral"
+mv2 <- mv[cond,]
+mv2$Comparison2 <- factor(mv2$Comparison2, levels=c("MCD 0.75", "MCD 0.99", "All"))
+
+pdf("figures_man2/LandsharcComparetoNeutlocationscatter.pdf", height=8, width=5)
+par(mar=c(3,5,1,0), mfrow=c(2,1))
+
+  boxplot(sqrt(mv2$ScatterDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate scatter")
+
+  boxplot(sqrt(mv2$LocationDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate location")
+dev.off()
+
+### Compare with All
+cond <- mv$Comparison1=="All"
+mv2 <- mv[cond,]
+mv2$Comparison2 <- factor(mv2$Comparison2, levels=c("MCD 0.75", "MCD 0.99", "Neutral"))
+
+pdf("figures_man2/LandsharcComparetoALLlocationscatter.pdf", height=8, width=5)
+par(mar=c(3,5,1,0), mfrow=c(2,1))
+
+  boxplot(sqrt(mv2$ScatterDiff)~mv2$Comparison2, ylab="Mean difference with\nmultivariate scatter of all data")
+
+  boxplot(sqrt(mv2$LocationDiff)~mv2$Comparison2, ylab="Mean difference with\nmultivariate location of all data")
+dev.off()  
+```
+
 
 Make plot of proportion of selected loci identified as robust
 ```{r}
@@ -122,71 +241,3 @@ pdf("results/LandsharcFalsePositivesMCD.pdf", width=3, height=3)
   dev.off()
 ```
 
-Next, compare the difference in the covariance matrix based on neutral loci only to (i) that based on all the data, and (ii) that based on the MCD.
-```{r}
-MakeComparePlot <- function(demo, letter){
-    # demo is a character of the demography ("IM")
-    data1 <- summarydf$Neut.cov.vs.All[demog==demo & alpha==0.75]
-      #(alpha is meaningless in this case)
-    data2 <- summarydf$Neut.cov.vs.MCD[demog==demo & alpha==0.75]
-    data3 <- summarydf$Neut.cov.vs.MCD[demog==demo & alpha==0.99]
-    factor <- c(rep("All data", length(data1)), rep("MCD 0.75", length(data2)),  rep("MCD 0.99", length(data3)))
-    diff <- c(data1,data2,data3)
-    if(demo=="2R"){
-     boxplot(diff ~ factor, las=1, ylim=c(0,3), cex.axis=1.5)     
-    }else{
-    boxplot(diff ~ factor, las=1, ylim=c(0,3), cex.axis=1.5, 
-names=c("","",""))
-    }
-    #mtext(demo, side=2, line=4, las=1)
-    text(3,2.5, paste(letter, ". ", demo, sep=""), cex=2)
-}
-par(mfrow=c(4,1), mar=c(1,4,0,0), oma=c(2,4,1,1))
-  MakeComparePlot("IM", "A")
-  MakeComparePlot("IBD", "B")
-  MakeComparePlot("1R", "C")
-  MakeComparePlot("2R", "D")
-```
-
-Similar results were found for all demographies. Make single plot for pub.
-```{r}
-  data1 <- summarydf$Neut.cov.vs.All[alpha==0.75]
-      #(alpha is meaningless in this case)
-  data2 <- summarydf$Neut.cov.vs.MCD[alpha==0.75]
-  data3 <- summarydf$Neut.cov.vs.MCD[alpha==0.99]
-  factor <- c(rep("All data", length(data1)), rep("MCD 0.75", length(data2)),  rep("MCD 0.99", length(data3)))
-   diff <- c(data1,data2,data3)
-
-pdf("results/LandsharcCompareToNeutralCovMat.pdf", width=5, height=3)
-  par(mfrow=c(1,1), mar=c(3,5,1,1), oma=c(0,0,0,0))
-  boxplot(diff~factor, ylab="Mean difference with covariance\nmatrix based on neutral loci", las=1)
-dev.off()
-```
-
-
-# pdf("results/LandsharcSummary_MdHd.pdf", width = 10, height =8)
-#     par(mfrow=c(4,1), mar=c(1,3,1,1),oma=c(1,3,1,0), cex=1.0)
-#     x <- 0.5
-#     y <- 1.1
-#     stats <- c(9:10,13:14, 17:18)
-#     #colors <- c(rep("magenta",4), 
-#     colors <- c(rep("lightblue",2), rep("blue",2), rep("magenta",2))
-#     # vioplot(summarydf[summarydf$demog=="1R",stats[1]],
-#     #         summarydf[summarydf$demog=="1R",stats[2]],
-#     #         summarydf[summarydf$demog=="1R",stats[3]],
-#     #         summarydf[summarydf$demog=="1R",stats[4]],
-#     #         ylim=c(0,1.2), col = colors)
-#     boxplot(summarydf[summarydf$demog=="IM",stats], col=colors,
-#             ylim=c(0,1.2))
-#     text(x,y, "IM", cex=1.3)
-#     boxplot(summarydf[summarydf$demog=="IBD",stats], col=colors,
-#             ylim=c(0,1.2))
-#     text(x,y, "IBD", cex=1.3)
-#     boxplot(summarydf[summarydf$demog=="1R",stats], col=colors,
-#             ylim=c(0,1.2))
-#     text(x,y, "1R", cex=1.3)
-#     boxplot(summarydf[summarydf$demog=="2R",stats], col=colors,
-#             ylim=c(0,1.2))
-#     text(x,y, "2R", cex=1.3)
-#     mtext("Empirical Power", side=2, outer=TRUE)
-# dev.off()

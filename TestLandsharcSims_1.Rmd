@@ -40,6 +40,90 @@ The following chunk of code does for each dataset:
 4) calculates empirical power for all stats
 
 ```{r}
+
+
+cov_summary <- data.frame(filename=NA, 
+                Comparison1=NA, Comparison2=NA, 
+                ScatterDiff=NA, LocationDiff=NA)
+head(cov_summary)
+
+for (i in 1:length(filelist)){
+  print(c(i, filelist[i]))
+  
+  infile <- paste(headdir, filelist[i], sep="")
+  dat <- read.table(infile, header=TRUE)
+  dat2 <- dat[dat$UseSNP,]
+  cols <- which(names(dat) %in% c("rho", "log.bf", "xtx", "TW.Zscore"))
+
+  # Covariance of all loci
+    (Sall <- cov(dat2[,cols]))
+    (Sall_mean <- colMeans(dat2[,cols]))
+    
+  # Covariance of neutral loci
+    (Sneut <- cov(dat2[dat2$s_high==0,cols]))
+    (Sneut_mean <- colMeans(dat2[dat2$s_high==0,cols]))
+        
+  # Covariance of MCD 75
+    S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
+    S_mcd75@cov
+    S_mcd75@center
+    #S_mcd75
+  # Covariance of MCD 99
+    S_mcd99 <- CovNAMcd(dat2[,cols], alpha=0.99)
+    S_mcd99@cov
+    S_mcd99@center
+    #S_mcd99    
+    
+    ### Comparisons with neutral
+    cov_summary<- rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "All",
+      ScatterDiff = mean((Sall-Sneut)^2),
+      LocationDiff = mean((Sall_mean-Sneut_mean)^2)
+    ))
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "MCD 0.75",
+      ScatterDiff= mean((Sneut-S_mcd75@cov)^2),
+      LocationDiff= mean((Sneut_mean-S_mcd75@center)^2)
+    ))
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "MCD 0.99",
+      ScatterDiff= mean((Sneut-S_mcd99@cov)^2),
+      LocationDiff= mean((Sneut_mean-S_mcd99@center)^2)
+    ))
+    
+     ### Comparisons with All
+    cov_summary<- rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "All",
+      Comparison2= "Neutral",
+      ScatterDiff = mean((Sall-Sneut)^2),
+      LocationDiff = mean((Sall_mean-Sneut_mean)^2)
+    )) #this is redundant, for plotting only
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "All",
+      Comparison2= "MCD 0.75",
+      ScatterDiff= mean((Sall-S_mcd75@cov)^2),
+      LocationDiff= mean((Sall_mean-S_mcd75@center)^2)
+    ))
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "All",
+      Comparison2= "MCD 0.99",
+      ScatterDiff= mean((Sall-S_mcd99@cov)^2),
+      LocationDiff= mean((Sall_mean-S_mcd99@center)^2)
+    ))
+}    
+   write.csv(cov_summary, file = paste("results/covsummaryLandsharc.csv", sep=""))
+``` 
+
+```{r}
 summarydf <- NULL
 alpha=c(0.75, 0.99)
   # This is the proportion of points used in the MCD calculation
@@ -50,7 +134,6 @@ for (j in seq_along(alpha)){
     infile <- paste(headdir, filelist[i], sep="")
     outfile <- paste(resultsdir, filelist[i], sep="")
     dat <- read.table(infile, header=TRUE)
-    cols <- which(names(dat) %in% c("rho", "log.bf", "xtx", "TW.Zscore"))
     dat2 <- dat[dat$UseSNP,]
     
     ### Get stats based on covmat of all the data
@@ -62,9 +145,6 @@ for (j in seq_along(alpha)){
     
     #head(dat.out.defaultS)
     #dim(dat.out)
-    
-      # Covariance of neutral loci
-      Sneut <- cov(dat2[dat2$s_high==0,cols])
       
       # Covariance of all loci
       Sall <- cov(dat2[,cols])
