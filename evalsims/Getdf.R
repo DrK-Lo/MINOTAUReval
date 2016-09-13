@@ -30,7 +30,6 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv),
     writeLines(c("Rows with NAs were removed.  The data now has this many rows:", nrow(dfv2)))
   }
 
-
   if("pcs" %in% whichstats){
   writeLines("Calculating outlierliness based on FastPCS...")
     x<- system.time({

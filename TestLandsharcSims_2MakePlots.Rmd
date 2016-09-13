@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-
+```
 ### Make summary plots
 ```{r}
 
@@ -38,22 +38,22 @@ pdf("results/LandsharcSummary.pdf", width = 15, height = 12)
    
     boxplot(summarydf[summarydf$demog=="IM" & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
-    text(x,y, "IM", cex=2)
+    text(x,y, "A. IM", cex=2)
     addtext()
     
     boxplot(summarydf[summarydf$demog=="IBD"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
-    text(x,y, "IBD", cex=2)
+    text(x,y, "B. IBD", cex=2)
     #addtext()
     
     boxplot(summarydf[summarydf$demog=="1R"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
-    text(x,y, "1R", cex=2)
+    text(x,y, "C. 1R", cex=2)
     #addtext()
     
     boxplot(summarydf[summarydf$demog=="2R"  & cond_alpha,stats], col=colors,
             ylim=c(0,1.2), names=names2)
-    text(x,y, "2R", cex=2)
+    text(x,y, "D. 2R", cex=2)
     mtext("Empirical Power", side=2, outer=TRUE)
     #addtext()
     
@@ -121,7 +121,7 @@ plot4 <- function(){
   plot1(); plot2(); plot3(); plot4()
    
 ### Add robust points to plot
-pdf("figures_man2/VizCovariance.pdf", width = 6, height=5)  
+pdf("results/VizCovariance.pdf", width = 6, height=5)  
   plot1(); plot2(); plot3(); plot4()
   points(X[Cxy@raw.wt==1,], pch=19, cex=0.1, col=rgb(1,0,1,0.2))  
   
@@ -137,6 +137,23 @@ pdf("figures_man2/VizCovariance.pdf", width = 6, height=5)
 dev.off()
 ```
 
+Make plot showing average signals for same dataset
+```{r}
+d2 <- read.table("data/KatieSims_multivariate/2R_R30_1351142970_988_6_NumPops=30_NumInd=20Bayenv2LFMMpca.Cpval_alpha0.75", header=TRUE)
+str(d2)
+d2$lev <- d2$s_high
+d2$lev[d2$s_high==0 & !d2$IsRobust] = "Neutral\n(non-robust)"
+d2$lev[d2$s_high==0 & d2$IsRobust] = "Neutral\n(robust)"
+d2$lev <- factor(d2$lev, levels=c("Neutral\n(robust)", "Neutral\n(non-robust)", "0.005", "0.01", "0.1"))
+col2 <- c("magenta", "black", "lightblue", "blue", "darkblue")
+
+pdf("results/LandsharcAverageSignals.pdf", width=7, height=9)
+  par(mfrow=c(2,1), mar=c(3,5,0,0))
+  boxplot(d2$rho~d2$lev, col=col2, ylab=expression("Spearman's "*rho*" (Univariate)"))
+  boxplot(log(d2$Md.mcd.subset, 10)~d2$lev, col=col2,
+        ylab="Log(Mahalanobis distance)\n(Multivariate)")
+dev.off()
+```
 
 Make plot comparing multivariate location and scatter - default vs. MCD vs. neutral
 ```{r}
@@ -144,21 +161,43 @@ mv <- read.csv("results/covsummaryLandsharc.csv", header=TRUE)
 mv <- mv[-1,]
 head(mv)
 
-demog <- sapply(strsplit(as.character(mv$filelist), "_"), function(x){x[1]})
+demog <- sapply(strsplit(as.character(mv$filename), "_"), function(x){x[1]})
 demog <- factor(demog, levels=c("IM", "IBD", "1R","2R"))
 (demoglevs <- levels(factor(demog)))
 
-### Compare with Neutral
-cond <- mv$Comparison1=="Neutral"
+### Compare MCD and PCS
+cond <- mv$Comparison1=="Neutral" & mv$Comparison2!="All"
+mv3 <- mv[cond,]
+levels(factor(mv3$Comparison2))
+mv3$Comparison2 <- factor(mv3$Comparison2)
+
+pdf("results/LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf", width=5, height=7)
+  par(mar=c(1,6,0.5,0.5), oma=c(4, 0,0,0), mfrow=c(2,1))
+  boxplot(sqrt(mv3$ScatterDiff)~mv3$method*mv3$alpha, ylab="Mean difference with\nneutral multivariate scatter", las=1, col=c("magenta", "grey"), names=rep("",6))
+  
+  boxplot(sqrt(mv3$LocationDiff)~mv3$method*mv3$alpha, ylab="Mean difference with\nneutral multivariate location", las=1, col=c("magenta", "grey"),
+          names=rep(c("MCD", "PCS"),3))
+  mtext("alpha",1,at = 0.5, line=2.5)
+  mtext("0.51",1,at = 1.5, line=2.5)
+  mtext("0.75",1,at = 3.5, line=2.5)
+  mtext("0.90",1,at = 5.5, line=2.5)
+dev.off()
+
+### Compare MCD only with Neutral
+mv$method <- as.character(mv$method)
+mv$method[is.na(mv$method)]="All"
+cond <- mv$Comparison1=="Neutral" & mv$method!="PCS"
 mv2 <- mv[cond,]
-mv2$Comparison2 <- factor(mv2$Comparison2, levels=c("MCD 0.75", "MCD 0.99", "All"))
+levels(factor(mv2$Comparison2))
+mv2$Comparison2 <- factor(mv2$Comparison2)
+mv2$Comparison2 <- factor(mv2$Comparison2, levels=c("MCD 0.51", "MCD 0.75", "MCD 0.90", "All"))
 
-pdf("figures_man2/LandsharcComparetoNeutlocationscatter.pdf", height=8, width=5)
-par(mar=c(3,5,1,0), mfrow=c(2,1))
+pdf("results/LandsharcComparetoNeutlocationscatter.pdf", height=7, width=5)
+par(mar=c(1,5,0.5,0.5), mfrow=c(2,1), oma=c(3,0,0,0))
 
-  boxplot(sqrt(mv2$ScatterDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate scatter")
+  boxplot(sqrt(mv2$ScatterDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate scatter", las=2, names=c("","","",""), col=c(rep("magenta",3),"white"))
 
-  boxplot(sqrt(mv2$LocationDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate location")
+  boxplot(sqrt(mv2$LocationDiff)~mv2$Comparison2, ylab="Mean difference with\nneutral multivariate location", las=1, col=c(rep("magenta",3),"white"))
 dev.off()
 
 ### Compare with All
@@ -166,7 +205,7 @@ cond <- mv$Comparison1=="All"
 mv2 <- mv[cond,]
 mv2$Comparison2 <- factor(mv2$Comparison2, levels=c("MCD 0.75", "MCD 0.99", "Neutral"))
 
-pdf("figures_man2/LandsharcComparetoALLlocationscatter.pdf", height=8, width=5)
+pdf("results/LandsharcComparetoALLlocationscatter.pdf", height=8, width=5)
 par(mar=c(3,5,1,0), mfrow=c(2,1))
 
   boxplot(sqrt(mv2$ScatterDiff)~mv2$Comparison2, ylab="Mean difference with\nmultivariate scatter of all data")

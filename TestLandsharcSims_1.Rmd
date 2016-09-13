@@ -19,7 +19,7 @@ if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
 library(qvalue)
 library(rrcovNA)
 library(devtools)
-install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
+install_github("NESCent/MINOTAUR", ref='develop')#, build_vignettes=TRUE)
 library(MINOTAUR)
 
 headdir <- "data/KatieSims/"
@@ -35,16 +35,13 @@ sessionInfo()
 ### Loop through each dataset
 The following chunk of code does for each dataset:
 1) calculate multivariate distances based on default covariance matrix
-2) compares covariance matrix estimated from just neutral loci to covariance matrix on all data and MCD estimate of covariance
-3) calculate multivariate distances based on MCD covariance matrix
-4) calculates empirical power for all stats
+2) compares covariance matrix estimated from just neutral loci to covariance matrix on all data and MCD/PCS estimate of covariance
 
 ```{r}
-
-
 cov_summary <- data.frame(filename=NA, 
                 Comparison1=NA, Comparison2=NA, 
-                ScatterDiff=NA, LocationDiff=NA)
+                ScatterDiff=NA, LocationDiff=NA,
+                alpha=NA, method=NA)
 head(cov_summary)
 
 for (i in 1:length(filelist)){
@@ -63,73 +60,135 @@ for (i in 1:length(filelist)){
     (Sneut <- cov(dat2[dat2$s_high==0,cols]))
     (Sneut_mean <- colMeans(dat2[dat2$s_high==0,cols]))
         
+  # Covariance of MCD 51
+    S_mcd51 <- CovNAMcd(dat2[,cols], alpha=0.51)
+    S_mcd51@cov
+    S_mcd51@center
   # Covariance of MCD 75
     S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
     S_mcd75@cov
     S_mcd75@center
     #S_mcd75
-  # Covariance of MCD 99
-    S_mcd99 <- CovNAMcd(dat2[,cols], alpha=0.99)
-    S_mcd99@cov
-    S_mcd99@center
+  # Covariance of MCD 90
+    S_mcd90 <- CovNAMcd(dat2[,cols], alpha=0.90)
+    S_mcd90@cov
+    S_mcd90@center
     #S_mcd99    
     
-    ### Comparisons with neutral
+  # Covariance of PCS 51
+    S_pcs51 <- FastPCS(dat2[,cols], alpha=0.51)
+    S_pcs51$cov
+    S_pcs51$center
+  # Covariance of PCS 75
+    S_pcs75 <- FastPCS(dat2[,cols], alpha=0.75)
+    S_pcs75$cov
+    S_pcs75$center
+    #S_mcd75
+  # Covariance of PCS 90
+    S_pcs90 <- FastPCS(dat2[,cols], alpha=0.90)
+    S_pcs90$cov
+    S_pcs90$center
+    
+  ### Comparisons with neutral #########
     cov_summary<- rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "Neutral",
       Comparison2= "All",
       ScatterDiff = mean((Sall-Sneut)^2),
-      LocationDiff = mean((Sall_mean-Sneut_mean)^2)
+      LocationDiff = mean((Sall_mean-Sneut_mean)^2),
+      alpha=NA, method=NA
+    ))
+    ### MCD
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "MCD 0.51",
+      ScatterDiff= mean((Sneut-S_mcd51@cov)^2),
+      LocationDiff= mean((Sneut_mean-S_mcd51@center)^2),
+      alpha=0.51, method="MCD"
     ))
     cov_summary<-rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "Neutral",
       Comparison2= "MCD 0.75",
       ScatterDiff= mean((Sneut-S_mcd75@cov)^2),
-      LocationDiff= mean((Sneut_mean-S_mcd75@center)^2)
+      LocationDiff= mean((Sneut_mean-S_mcd75@center)^2),
+      alpha=0.75, method="MCD"
     ))
     cov_summary<-rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "Neutral",
-      Comparison2= "MCD 0.99",
-      ScatterDiff= mean((Sneut-S_mcd99@cov)^2),
-      LocationDiff= mean((Sneut_mean-S_mcd99@center)^2)
+      Comparison2= "MCD 0.90",
+      ScatterDiff= mean((Sneut-S_mcd90@cov)^2),
+      LocationDiff= mean((Sneut_mean-S_mcd90@center)^2),
+      alpha=0.9, method="MCD"
+    ))
+    ### PCS
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "PCS 0.51",
+      ScatterDiff= mean((Sneut-S_pcs51$cov)^2),
+      LocationDiff= mean((Sneut_mean-S_pcs51$center)^2),
+      alpha=0.51, method="PCS"
+    ))
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "PCS 0.75",
+      ScatterDiff= mean((Sneut-S_pcs75$cov)^2),
+      LocationDiff= mean((Sneut_mean-S_pcs75$center)^2),
+      alpha=0.75, method="PCS"
+    ))
+    cov_summary<-rbind(cov_summary, data.frame(
+      filename=filelist[i],
+      Comparison1= "Neutral",
+      Comparison2= "PCS 0.90",
+      ScatterDiff= mean((Sneut-S_pcs90$cov)^2),
+      LocationDiff= mean((Sneut_mean-S_pcs90$center)^2),
+      alpha=0.90, method="PCS"
     ))
     
-     ### Comparisons with All
+    ### Comparisons with All
     cov_summary<- rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "All",
       Comparison2= "Neutral",
       ScatterDiff = mean((Sall-Sneut)^2),
-      LocationDiff = mean((Sall_mean-Sneut_mean)^2)
+      LocationDiff = mean((Sall_mean-Sneut_mean)^2),
+      alpha=NA, method=NA
     )) #this is redundant, for plotting only
     cov_summary<-rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "All",
       Comparison2= "MCD 0.75",
       ScatterDiff= mean((Sall-S_mcd75@cov)^2),
-      LocationDiff= mean((Sall_mean-S_mcd75@center)^2)
+      LocationDiff= mean((Sall_mean-S_mcd75@center)^2),
+      alpha=0.75, method="MCD"
     ))
     cov_summary<-rbind(cov_summary, data.frame(
       filename=filelist[i],
       Comparison1= "All",
-      Comparison2= "MCD 0.99",
-      ScatterDiff= mean((Sall-S_mcd99@cov)^2),
-      LocationDiff= mean((Sall_mean-S_mcd99@center)^2)
+      Comparison2= "MCD 0.90",
+      ScatterDiff= mean((Sall-S_mcd90@cov)^2),
+      LocationDiff= mean((Sall_mean-S_mcd90@center)^2),
+      alpha=0.90, method="MCD"
     ))
 }    
    write.csv(cov_summary, file = paste("results/covsummaryLandsharc.csv", sep=""))
 ``` 
 
+
+### Loop through each dataset
+Evaluate empirical power
+
 ```{r}
 summarydf <- NULL
-alpha=c(0.75, 0.99)
+alpha=c(0.75, 0.90)
   # This is the proportion of points used in the MCD calculation
 
-for (j in seq_along(alpha)){
   for (i in 1:length(filelist)){
+    #i=21
     print(c(j, i, filelist[i]))
     infile <- paste(headdir, filelist[i], sep="")
     outfile <- paste(resultsdir, filelist[i], sep="")
@@ -145,10 +204,17 @@ for (j in seq_along(alpha)){
     
     #head(dat.out.defaultS)
     #dim(dat.out)
+    
+    p.ranks <- 1-apply(dat2[,cols], 2, rank)/(nrow(dat2)+1)
+    min(p.ranks)
+    max(p.ranks)
+    
+    dat.out.defaultS$dcms.ranks <- DCMS(p.ranks)
       
       # Covariance of all loci
       Sall <- cov(dat2[,cols])
       
+    for (j in seq_along(alpha)){
       # Covariance of MCD
       S_mcd <- CovNAMcd(dat2[,cols], alpha=alpha[j])
       #sum(S_mcd2@raw.wt) # this should be alpha*number rows in dat2
@@ -163,47 +229,37 @@ for (j in seq_along(alpha)){
       ProportionS0.005MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.005)/sum(S_mcd@raw.wt==1)
       ProportionS0.01MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.01)/sum(S_mcd@raw.wt==1)
       ProportionS0.1MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.1)/sum(S_mcd@raw.wt==1)
-      
-      
-      #par(mar=c(4,3,1,1), bty="n")
-      # plot(neut, all, pch=19, col="blue",
-      #      xlab="log(abs(covariance)):\nNeutral loci only", ylab="") 
-      #  abline(0,1, lwd=2)
-      #  abline(lm(all~neut), col="blue")
-      # points(neut, mcd, pch=17, col="orange")
-      # abline(lm(mcd~neut), col="orange")
-      # points(neut, mcd, col="red")
-      # abline(lm(mcd~neut), col="red", lwd=2)
-      # legend(0,-2, c("raw", "mcd alpha=50", "mcd alpha=75"), col=c("blue", "orange", "red"), pch=c(19, 17, 1), bty="n")
-       
       ### Get stats based on mcd covmat
-      dat.out <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov, M=S_mcd@center)
-      head(dat.out)
-      colnames(dat.out)[(ncol(dat.out)-3):
-                                 ncol(dat.out)] <-
-      c( "Md.mcd", "Hd.mcd", "Kd.mcd", "Nd.mcd") 
-       head(dat.out)
-       
-      ### Get stats based on mcd covmat and robust points
-      dat.out.subset <- Getdf(dat.out, cols, S=S_mcd@cov,  M=S_mcd@center, subset=which(S_mcd@raw.wt==1))
-      head(dat.out.subset)
+      dat.out.subset <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov, M=S_mcd@center,  whichstats=c( "md", "hd", "kd", "nd"), subset=which(S_mcd@raw.wt==1))
+      
       colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
                                  ncol(dat.out.subset)] <-
       c( "Md.mcd.subset", "Hd.mcd.subset", "Kd.mcd.subset", "Nd.mcd.subset") 
        head(dat.out.subset)
   
+      dat.out.subset$dcms.ranks.mcd <- DCMS(p.ranks, subset=which(S_mcd@raw.wt==1))
+             
       dat.out <- dat.out.subset
-    ### Make plots ####
-  #    pdf(file = paste(outfile, ".pdf", sep=""),width = 4, height=6)
-  #      par(mfrow=c(2,1), mar=c(4,4,1,1), oma=c(0,0,2,1))
-  #      plot(dat.out[,cols[1]], dat.out[,cols[2]], col=factor(dat.out$s_high), xlab="Spearman's rho (GEA)", ylab="XTX (Fst analog)")
-  #      plot(dat.out[,cols[1]], dat.out[,cols[3]], col=factor(dat.out$s_high), xlab="Spearman's rho (GEA)", ylab="Z-score (LFMM, GEA)")
-  #      mtext(dat.out$demog[1] , side = 3, outer=TRUE)
-  #    dev.off()
-  #    pdf(file = paste(outfile, "mulitD.pdf", sep=""),width = 6, height=8)
-  #      ComparePlot(dat.out, colorVect=factor(dat$s_high), 9500:9996)
-  #    dev.off()
+      
+      ## remove these columns for this study
+      dat.out2 <- dat.out[,-which(names(dat.out) %in% c("LA.All", "SNP.LA2", "xtx.999perc", "bf.999perc", "rho.999perc",
+          "xtx.empP", "bf.empP", "rho.empP",
+          "xtx.q", "bf.q", "rho.q", "xtx.FDR01",
+          "bf.FDR01", "rho.FDR01", "TW.MinusLogP",
+          "TW.P", "K5.Zscore", "K5.MinusLogP",
+          "K5.P", "K5.999perc", "KTW.999perc",
+          "KTW", "L.q.K.5","L.q.K.TW","L.empQ.K.5","L.empQ.K.TW",
+          "Lq.K.5.FDR01","Lq.K.TW.FDR01","L.empQ.K.5.FDR0","L.empQ.K.TW.FDR01", "pca.empP.K10S","pca.q.K10S","pca.FDR01.K10S","pca.empP.K20S","pca.q.K20S","pca.FDR01.K20S","pca.empP.K10NS","pca.q.K10NS","pca.FDR01.K10NS", "L.empQ.K.5.FDR01", "pcs", "Hcd"))]
+      
+      
+      dat.out2$MCDalpha <- alpha[j]
+      dat.out2$IsRobust <- S_mcd@raw.wt==1
+      head(dat.out2)
+      write.table(dat.out2,
+              paste("data/KatieSims_multivariate/",filelist[i],"_alpha",alpha[j], sep=""), col.names = TRUE, row.names=FALSE)
   
+    dat.out <- dat.out2
+      
     ### Calculate Empirical Power ###
       out <- data.frame(infile = as.character(infile),
                demog = as.character(dat.out$demog[1]),
@@ -211,30 +267,26 @@ for (j in seq_along(alpha)){
                bf.ep = getEmpPower(dat.out$log.bf, dat.out$s_high==0),
                rho.ep = getEmpPower(dat.out$rho, dat.out$s_high==0),
                lfmm.ep = getEmpPower(dat.out$TW.Zscore, dat.out$s_high==0),
-               Hcd.ep = getEmpPower(dat.out$Hcd, dat.out$s_high==0),
-               pcs.ep = getEmpPower(dat.out$pcs, dat.out$s_high==0),
+               Hcd.ep = getEmpPower(dat.out$Hcd.default, dat.out$s_high==0),
+               pcs.ep = getEmpPower(dat.out$pcs.default, dat.out$s_high==0),
                alpha = alpha[j],
                
                Md.default.ep = getEmpPower(dat.out$Md.default, dat.out$s_high==0),
                Hd.default.ep = getEmpPower(dat.out$Hd.default, dat.out$s_high==0),
                Kd.default.ep = getEmpPower(dat.out$Kd.default, dat.out$s_high==0),
                Nd.default.ep = getEmpPower(dat.out$Nd.default, dat.out$s_high==0),
-               
-               Md.mcd.ep = getEmpPower(dat.out$Md.mcd, dat.out$s_high==0),
-               Hd.mcd.ep = getEmpPower(dat.out$Hd.mcd, dat.out$s_high==0),
-               Kd.mcd.ep = getEmpPower(dat.out$Kd.mcd, dat.out$s_high==0),
-               Nd.mcd.ep = getEmpPower(dat.out$Nd.mcd, dat.out$s_high==0),
                 
                Md.mcd.subset.ep = getEmpPower(dat.out$Md.mcd.subset, dat.out$s_high==0),
                Hd.mcd.subset.ep = getEmpPower(dat.out$Hd.mcd.subset, dat.out$s_high==0),
                Kd.mcd.subset.ep = getEmpPower(dat.out$Kd.mcd.subset, dat.out$s_high==0),
                Nd.mcd.subset.ep = getEmpPower(dat.out$Nd.mcd.subset, dat.out$s_high==0),
                
+              dcms.ranks.ep =  getEmpPower(dat.out$dcms.ranks, dat.out$s_high==0),
+              
+              dcms.ranks.mcd.ep =  getEmpPower(dat.out$dcms.ranks.mcd, dat.out$s_high==0),
+               
               Md.mcd.subset.fp = sum(p.adjust(1-returnEmpP(dat.out$Md.mcd.subset[dat.out$s_high==0], dat.out$Md.mcd.subset[S_mcd@raw.wt==1 & dat.out$s_high==0]),method="BH")<0.05)/9900,
-               
-               Neut.cov.vs.All = mean(abs(neut-all)),
-               Neut.cov.vs.MCD = mean(abs(neut-mcd)),
-               
+              
                ProportionNeutralMCDRobust,
                ProportionS0.005MCDRobust,
                ProportionS0.01MCDRobust,
@@ -246,7 +298,7 @@ for (j in seq_along(alpha)){
         write.table(out, file = paste(resultsdir,"LandsharcSummary2.txt",sep=""), append=TRUE, col.names=FALSE, row.names=FALSE) 
                   }
     #summarydf <- rbind(summarydf,out)
-  } # end loop through files
-} # end loop through alpha
+  } # end loop through alpha
+} # end loop through files
 #write.table(summarydf,file = , sep=""))
 ```
