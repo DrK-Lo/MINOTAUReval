@@ -52,6 +52,7 @@ The following chunk of code does for each dataset:
 1) calculate multivariate distances based on default covariance matrix
 2) compares covariance matrix estimated from just neutral loci to covariance matrix on all data and MCD estimate of covariance
 3) calculate multivariate distances based on MCD covariance matrix
+4) Make plots of signals
 
 I got frustrated with flex_manhattan2.  First, it doesn't plot SNPs according to their genomic position; it plots them according to index.
 
@@ -107,57 +108,64 @@ for (i in 1:length(filelist)){
   x <- 1:nrow(dat)
   
   ### Function to determine power to detect known loci
-  getPower <- function(column, upper=TRUE){
+getPower <- function(column, upper=TRUE, nsnps=1){
     # upper=TRUE tests for outliers in the upper 95%
     # upper=FALSE tests for outliers lower 5% of the test statistic
     # 25 SNPs tested on either side of SNP
     variable <- dat[,column]
     print(names(dat)[column])
     if (upper){
-      (CI <- sort(variable)[length(variable)*0.95])
+      (CI.95 <- quantile(variable,probs = 0.95, type=1))
+      (CI.90 <- quantile(variable,probs = 0.90, type=1))
     }
     if (!upper){
-      CI <- sort(variable)[length(variable)*0.05]
+      CI.95 <- quantile(variable,probs = 0.05, type=1)
+      CI.90 <- quantile(variable,probs = 0.1, type=1)
     }
     
-    row <- CI_out <- CI_robust_75 <- CI_robust_99 <- c()
+    row <- CI_out.95 <- CI_out.90 <- CI_robust_75 <- CI_robust_99 <- c()
     for (k in 1:nrow(sel_snps)){
         row[k] <- which(dat$chr == sel_snps$chr[k] 
                         & dat$bp > sel_snps$SNP[k])[1]
         cond <- (row[k]-25):(row[k]+25)
         
         if(upper){
-          CI_out[k] <- sum((variable[cond]) > CI)>5
+          CI_out.95[k] <- sum((variable[cond]) > CI.95)
+          CI_out.90[k] <- sum((variable[cond]) > CI.90)
           var_75 <- max(variable[dat$robust75])
           var_99 <- max(variable[dat$robust99])
             # at least one SNP in window has a signal
             # greater than the criteria
           CI_robust_75[k] <- sum((variable[cond]) >
-                                   var_75) >5
+                                   var_75) 
           CI_robust_99[k] <- sum((variable[cond]) >
-                                   var_99) >5
+                                   var_99) 
         }# end if upper
 
         if (!upper){
-          CI_out[k] <- sum((variable[cond]) < CI)>5
+          CI_out.95[k] <- sum((variable[cond]) < CI.95)
+          CI_out.90[k] <- sum((variable[cond]) < CI.90)
                 # at least five SNPs in window has a signal
                 # greater than the criteria
           var_75 <- min(variable[dat$robust75])
           var_99 <- min(variable[dat$robust99])
           CI_robust_75[k] <- sum((variable[cond]) <
-                                   var_75) >5
+                                   var_75)
           CI_robust_99[k] <- sum((variable[cond]) <
-                                      var_99) >5
+                                      var_99)
         }# end if !upper
     }# end loop though focal SNPs
-    out=data.frame(CI_out, CI_robust_75, CI_robust_99)
-    print(out)
-    power = colSums(out)/nrow(out)
-    power.out = data.frame(cutoff.CI=CI, cutoff.robust75=var_75, 
+    out=data.frame(CI_out.95, CI_out.90, CI_robust_75, CI_robust_99)
+    #print(out)
+    power = (colSums(out>=nsnps))/nrow(out)
+    power.out = data.frame(cutoff.CI.95=CI.95,
+                           cutoff.CI.90=CI.90,
+                           cutoff.robust75=var_75, 
                      cutoff.robust99=var_99,
-                     power.CI=power[1],
-                      power.robust75=power[2],
-                      power.robust99=power[3]
+                     power.CI.95=power[1],
+                     power.CI.90=power[2],
+                      power.robust75=power[3],
+                      power.robust99=power[4]
     )
     return(power.out)
   }
@@ -173,32 +181,38 @@ for (i in 1:length(filelist)){
                  "Md.mcd.subset.99", "Hd.mcd.subset.99", 
                  "Kd.mcd.subset.99", "Nd.mcd.subset.99")
   )
-  a<- lapply(whichcols, getPower)
-  a<-data.frame(matrix(unlist(a), ncol = 6, byrow=TRUE))
+  
+for (nsnps in 1:5){  
+  a<- lapply(whichcols, getPower, nsnps=nsnps)
+  a<-data.frame(matrix(unlist(a), ncol = 8, byrow=TRUE))
   names(a) <- names(getPower(7))
   a$stat <- names(dat)[whichcols]
   a$upper<-TRUE
+  a$nsnps<-nsnps
   a
   
   whichcolsMin <- which(names(dat) %in% c("win51_TajD", "win51_pi"))
-  b<-lapply(whichcolsMin, getPower, upper=FALSE)
-  b<-data.frame(matrix(unlist(b), ncol = 6, byrow=TRUE))
+  b<-lapply(whichcolsMin, getPower, upper=FALSE, nsnps=nsnps)
+  b<-data.frame(matrix(unlist(b), ncol = 8, byrow=TRUE))
   names(b) <- names(getPower(7))
   b$stat <- names(dat)[whichcolsMin]
   b$upper <- FALSE
+  b$nsnps<-nsnps
   final <- rbind(a,b)
   
   final$breed <- col_match[i]
   
-  if(i==1){
+  if(i==1 & nsnps==1){
     write.table(final, file="results/dogBreedsPower.txt", append=FALSE, row.names=FALSE, col.names=TRUE)
   }else{
     write.table(final, file="results/dogBreedsPower.txt", append=TRUE, row.names=FALSE, col.names=FALSE)
   }
+}#end loop through nsnps
+} #end loop
   
   ### Plotting ###
   ################
-  if(makeplots==TRUE){
+if(makeplots==TRUE){
   ### this makes a manhattan plot and adds the known genes
   makeplot1 <- function(text, variable){
     # text is plotted on the y -axis

@@ -6,6 +6,134 @@ output: html_document
 ---
 
 ```{r}
+library(plyr)
+# setwd("~/Desktop/MINOTAUReval/")
 
+headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"
+outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_pi_TD_H12/"
+#resultsdir <- "~/Desktop/MINOTAUReval/results/"
+filelist <- list.files(outdir, pattern = "set1")
+filelist
+length(filelist)
+if (!length(filelist)==25){print("Errr: missing simulation files")}
 
+genelist <- read.csv("data/dog_QTL_genes.csv")
+  # the column names in this file match the ones in the filelist
+head(genelist)
+col_match <- sub(".csv", "", sub("set1_full_","", filelist))
+col_match %in% names(genelist)
+  # should be all trues
+
+i <- 15
+
+print(c(i, filelist[i]))
+  infile <- paste(outdir, filelist[i], sep="")
+  dat <- read.csv(infile, header=TRUE)
+  dim(dat)
+  head(dat)
+  dat <- dat[order(dat$chr, dat$bp),]
+  
+  (focal_snps <- genelist[,c("chr","start","end", "SNP", col_match[i])])
+  (sel_snps <- focal_snps[focal_snps[,5]>0.5,c("chr","SNP")])
+  #(sel_region <- focal_snps[focal_snps[,5]>0.5,c("chr","start", "end")])
+  print(sel_snps)
+
+   chr <- levels(factor(dat$chr))
+   dat$loc <- as.factor(dat$chr)
+   dat$loc <- mapvalues(dat$loc, from= chr, to= 1:length(chr))
+   tail(dat$loc)
+   
+    ### Set colors for Manhattan plot
+   dat$col <- as.character("n")
+   dat$bp2 <- c()
+   for (j in seq_along(chr)){
+     if (j %% 2 ==0){dat$col[dat$loc==j] <- rgb(0,0,0,0.5)}else{dat$col[dat$loc==j] <- rgb(0.5,0.5,0.5,0.5)}
+     bob <- dat$bp[dat$loc==j] - min(dat$bp[dat$loc==j])
+     dat$bp2[dat$loc==j] <- bob/max(bob)*0.95   
+   } 
+
+      dat$pos <- as.numeric(dat$loc)+dat$bp2
+  
+  x <- 1:nrow(dat)
+  
+  head(dat)
+  variable <- dat$Md.mcd.subset.75
+  num_snp_range <- 100
+
+```
+    
+```{r}  
+### TURN INTO A FUNCTION I CAN CALL
+MakePlot <- function(variable, num_snp_range, y_text, tail="right", xlabel=FALSE, xaxt="n"){  
+  if (tail == "right"){
+  perc.99 <- quantile(variable, 0.95, type=1)
+  perc.95 <- quantile(variable, 0.90, type=1)
+  }
+  if (tail == "left"){
+    perc.99 <- quantile(variable, 0.05, type=1)
+    perc.95 <- quantile(variable, 0.10, type=1)
+  }
+  allrange <- NULL 
+    for (j in 1:nrow(sel_snps)){
+     index <- which(dat$chr == sel_snps$chr[j] & dat$bp > sel_snps$SNP[j])[1]
+     range <- (index-num_snp_range):(index+num_snp_range)
+     allrange <- c(allrange, range)
+    }
+    #par(mfcol=c(1, nrow(sel_snps)), mar=c(3,2,0,0))
+  
+  dat[allrange,]
+
+#### START PLOTTING HERE
+
+ # par(mfcol=c(1,nrow(sel_snps)), mar=c(4,0,1,1), oma=c(4,4,1,1))
+    for (j in 1:nrow(sel_snps)){
+      index <- which(dat$chr == sel_snps$chr[j] & dat$bp > sel_snps$SNP[j])[1]
+     range <- (index-num_snp_range):(index+num_snp_range)
+     if(j==6){range <- (index-166):(index+num_snp_range)}
+     #x <- dat$pos[range]-floor(dat$pos[range])
+     bp2 <- dat$bp/1e06 #convert to Mb
+     x <- bp2[range]
+     if(j==1){
+     plot(x, variable[range], col=rgb(0,0,0,0.4), pch=19,  bty="l", cex=1, las=2, ylab="", xlab="", ylim=c(min(variable[allrange], na.rm=TRUE),max(variable[allrange], na.rm=TRUE)), xaxt=xaxt)
+       mtext(y_text, side=2, line=4)
+       }else{
+      plot(x, variable[range], col=rgb(0,0,0,0.4), pch=19,  yaxt="n", bty="l", cex=1, las=2, ylab="", xlab="", main="", ylim=c(min(variable[allrange], na.rm=TRUE),max(variable[allrange], na.rm=TRUE)), xaxt=xaxt)
+       }#end else
+     
+     if(xlabel==TRUE){
+     mtext(paste(dat$chr[index],"\n", dat$bp[index], sep=""), line=5, side=1, cex=0.8)
+     }
+     
+     points(c(bp2[index], bp2[index]), c(-100,100), type="l", lwd=2, col=rgb(0,1,1, 0.5))
+     windowsize <- 25
+     points(c(bp2[index+windowsize], bp2[index+windowsize]), c(-100,100), type="l", lwd=2, col=rgb(0,1,1, 0.5), lty=2)
+     points(c(bp2[index-windowsize], bp2[index-windowsize]), c(-100,100), type="l", lwd=2, col=rgb(0,1,1, 0.5), lty=2)
+    abline(perc.99, 0, col=rgb(0,0,1, 0.5))  
+    abline(perc.95, 0, col=rgb(0,0,1, 0.5), lty=2)
+    
+    if(tail=="right"){
+    abline(max(variable[dat$robust75], na.rm=TRUE), 0, col=rgb(1,0,0, 0.5), lty=3, lwd=2)
+    }
+    if(tail=="left"){
+      abline(min(variable[dat$robust75], na.rm=TRUE), 0, col=rgb(1,0,0, 0.5), lty=3, lwd=2)
+    }
+    
+    cond <- dat$robust75[range]
+    points(x[cond], variable[range][cond], col="yellow", pch=20, cex=0.6)
+    }
+  
+}#end function
+
+```
+
+```{r}
+pdf("results/Maltese_signatures.pdf", width=12, height=10)
+par(mfrow=c(5,6), nrow(sel_snps),  mar=c(1,0,0.5,0.5), oma=c(6,6,1,1))
+    MakePlot(dat$unstd_iHS, 100, "iHS")
+    #MakePlot(dat$unstd_nSL, 100, "nSL")
+    MakePlot(dat$win51_pi, 100, "pi", tail="left")
+    MakePlot(dat$win51_TajD, 100, "Tajima's D", tail="left")
+    MakePlot(dat$win51_H12, 100, "H12")
+    MakePlot(dat$Md.mcd.subset.75, 100, "Mahalanobis MCD 0.75", xlabel=TRUE, xaxt="t")
+dev.off()
 ```
