@@ -9,9 +9,7 @@ output: html_document
 ```{r setup, include=FALSE}
 #setwd("/Users/katie/Desktop/MINOTAUReval")
 source("evalsims/ComparePlot2.R")
-source("evalsims/distanceFunctionsOther.R")
 source("evalsims/getEmpiricalP3_BH.R")
-source("evalsims/Getdf.R")
 
 
 if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
@@ -20,7 +18,7 @@ if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
 library(qvalue)
 library(rrcovNA)
 library(devtools)
-install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
+install_github("NESCent/MINOTAUR", )#, build_vignettes=TRUE)
 library(MINOTAUR)
 
 headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"

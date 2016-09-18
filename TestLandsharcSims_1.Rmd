@@ -8,9 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 #setwd("/Users/katie/Desktop/MINOTAUReval")
 source("evalsims/ComparePlot2.R")
-source("evalsims/distanceFunctionsOther.R")
+#source("evalsims/distanceFunctionsOther.R")
 source("evalsims/getEmpiricalP3_BH.R")
-source("evalsims/Getdf.R")
+#source("evalsims/Getdf.R")
 
 
 if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
@@ -19,18 +19,22 @@ if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
 library(qvalue)
 library(rrcovNA)
 library(devtools)
+library(DMwR)
 install_github("NESCent/MINOTAUR", ref='develop')#, build_vignettes=TRUE)
 library(MINOTAUR)
+library(FastPCS)
 
 headdir <- "data/KatieSims/"
 resultsdir <- "~/Desktop/MINOTAUReval/results/"
 filelist <- list.files(headdir)
+filelist[55]
 filelist <- filelist[-55]
 length(filelist)
-if (!length(filelist)==72){print("Errr: missing simulation files")}
+if (!length(filelist)==72){print("Error: missing simulation files")}
 
 sessionInfo()
 ```
+
 
 ### Loop through each dataset
 The following chunk of code does for each dataset:
@@ -182,123 +186,178 @@ for (i in 1:length(filelist)){
 ### Loop through each dataset
 Evaluate empirical power
 
+stat_to_pvalue # <- function(dfv, column.nums=1:ncol(dfv), subset=1:nrow(dfv), two.tailed=TRUE, right.tailed=TRUE)
+DCMS # <- function(dfv, column.nums=1:ncol(dfv), subset=1:nrow(dfv), S=NULL, dfp, column.nums.p=1:ncol(dfp))
+CSS # <- function(dfv, column.nums=1:ncol(dfv), subset=1:nrow(dfv), two.tailed=TRUE, right.tailed=TRUE){
+
+DCMS now takes a dfp data frame along with dfv, which could be output from stat_to_pvalue but it could come from anywhere.
+
 ```{r}
-summarydf <- NULL
-alpha=c(0.75, 0.90)
-  # This is the proportion of points used in the MCD calculation
 
   for (i in 1:length(filelist)){
     #i=21
-    print(c(j, i, filelist[i]))
+    print(c(i, filelist[i]))
     infile <- paste(headdir, filelist[i], sep="")
     outfile <- paste(resultsdir, filelist[i], sep="")
     dat <- read.table(infile, header=TRUE)
-    dat2 <- dat[dat$UseSNP,]
+    cols1 <- which(names(dat) %in% c("rho", "log.bf", "xtx", "TW.Zscore"))
+    dat2 <- dat[dat$UseSNP,c(1,3,4,5,6,7,8,9,10,11,12,13,cols1)]
+    dat.out <- dat2
+    cols2 <- which(names(dat.out) %in% c("rho", "log.bf", "xtx", "TW.Zscore"))
+    head(dat.out)    
+    bw <- c(seq(0.01,0.1,by=0.03),seq(0.2,1,by=0.2), seq(2,5,by=1))
+      #Bandwidths to try for Kd ML
     
-    ### Get stats based on covmat of all the data
-    dat.out.defaultS <- Getdf(dat2, cols)
-    colnames(dat.out.defaultS)[(ncol(dat.out.defaultS)-5):
-                                 ncol(dat.out.defaultS)] <-
-      c("pcs.default","Hcd.default", "Md.default", 
-        "Hd.default", "Kd.default", "Nd.default")
+    ### MCD alpha = 0.75
+    S_mcd0.75 <- CovNAMcd(dat.out[,cols2], alpha=0.75)
+    dat.out$IsRobust <- S_mcd0.75@raw.wt==1
     
-    #head(dat.out.defaultS)
-    #dim(dat.out)
+### Get multivariate distance stats based on 
+### raw statistics and all points
+    dat.out$Md.default.raw <- Mahalanobis(dat.out, column.nums = cols2)
     
-    p.ranks <- 1-apply(dat2[,cols], 2, rank)/(nrow(dat2)+1)
-    min(p.ranks)
-    max(p.ranks)
+    dat.out$Hd.default.raw <- harmonicDist(dat.out, column.nums = cols2)
     
-    dat.out.defaultS$dcms.ranks <- DCMS(p.ranks)
-      
-      # Covariance of all loci
-      Sall <- cov(dat2[,cols])
-      
-    for (j in seq_along(alpha)){
-      # Covariance of MCD
-      S_mcd <- CovNAMcd(dat2[,cols], alpha=alpha[j])
-      #sum(S_mcd2@raw.wt) # this should be alpha*number rows in dat2
-      
-      # Compare cov of neutral data to cov_mcd of all data
-      neut <- as.numeric(log(abs(Sneut)))
-      all <- as.numeric(log(abs(Sall)))
-      mcd <- as.numeric(log(abs(S_mcd@cov)))
-      
+    #Kd.ML <- kernelDeviance(dat.out, cols2, bandwidth = bw)
+    #(bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]])
+    #dat.out$Kd.default.raw <- kernelDist(dat.out, column.nums = cols2, bandwidth = bw.best)
+    
+    dat.out$Nd.default.raw <- neighborDist(dat.out, column.nums = cols2)
+    #head(dat.out)
+
       # Calculate the proportion of neutral/selected loci identified as robust (non-outliers)
-      ProportionNeutralMCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0)/sum(S_mcd@raw.wt==1)
-      ProportionS0.005MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.005)/sum(S_mcd@raw.wt==1)
-      ProportionS0.01MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.01)/sum(S_mcd@raw.wt==1)
-      ProportionS0.1MCDRobust <- sum(dat2$s_high[S_mcd@raw.wt==1]==0.1)/sum(S_mcd@raw.wt==1)
-      ### Get stats based on mcd covmat
-      dat.out.subset <- Getdf(dat.out.defaultS,cols,S=S_mcd@cov, M=S_mcd@center,  whichstats=c( "md", "hd", "kd", "nd"), subset=which(S_mcd@raw.wt==1))
+      ProportionNeutralMCDRobust <- sum(dat2$s_high[S_mcd0.75@raw.wt==1]==0)/sum(S_mcd0.75@raw.wt==1)
+      ProportionS0.005MCDRobust <- sum(dat2$s_high[S_mcd0.75@raw.wt==1]==0.005)/sum(S_mcd0.75@raw.wt==1)
+      ProportionS0.01MCDRobust <- sum(dat2$s_high[S_mcd0.75@raw.wt==1]==0.01)/sum(S_mcd0.75@raw.wt==1)
+      ProportionS0.1MCDRobust <- sum(dat2$s_high[S_mcd0.75@raw.wt==1]==0.1)/sum(S_mcd0.75@raw.wt==1)
+    
+### Get multivariate distance stats based on 
+### raw statistics and MCD 0.75
+    dat.out$Md.mcd75.raw <- Mahalanobis(dat.out, column.nums = cols2, S=S_mcd0.75@cov, M=S_mcd0.75@center)
+    
+    dat.out$Hd.mcd75.raw <- harmonicDist(dat.out, column.nums = cols2, S = S_mcd0.75@cov, subset = dat.out$IsRobust)
+    
+    #Kd.ML <- kernelDeviance(dat.out, cols2, S = S_mcd0.75@cov, bandwidth = bw,subset = dat.out$IsRobust)
+    #(bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]])
+    #dat.out$Kd.mcd75.raw <- kernelDist(dat.out, column.nums = cols2, bandwidth = bw.best, S = S_mcd0.75@cov, subset = dat.out$IsRobust)
+    
+    dat.out$Nd.mcd75.raw <- neighborDist(dat.out, column.nums = cols2,  S = S_mcd0.75@cov, subset = dat.out$IsRobust)
+    #head(dat.out)
+
+    print("dist done")
+    
+### Get hclust distance based on raw statistics (and all points)
+    ### default Hclust with wardD2
+    Hcd <- outliers.ranking(dat.out[,cols2], method = "sizeDiff",
+                 method.pars = NULL,clus = list(dist = "euclidean",alg = "hclust",meth = "ward.D2"),power = 1, verb = F)
+    
+    dat.out$Hclust.wardD2.default.raw <- -log(1-Hcd$prob.outliers)
+    #boxplot(dat.out$Hclust.wardD2.default.raw~dat.out$s_high)
+    
+    ### Hclust with wardD2 and robust points
+    Hcd.mcd <- outliers.ranking(data= dat.out[dat.out$IsRobust,cols2], test.data= dat.out[,cols2], method = "sizeDiff", method.pars = NULL, clus = list(dist = "euclidean",alg = "hclust", meth = "ward.D2"), power = 1, verb = F)
+    
+    dat.out$Hclust.wardD2.mcd75.raw <- -log(1-Hcd.mcd$prob.outliers)
+        
+    ### default Hclust with Average
+    Hcd <- outliers.ranking(dat.out[,cols2], method = "sizeDiff",
+                 method.pars = NULL,clus = list(dist = "euclidean",alg = "hclust",meth = "average"),power = 1, verb = F)
+    
+    dat.out$Hclust.Ave.default.raw <- -log(1-Hcd$prob.outliers)
+    #boxplot(dat.out$Hclust.Ave.default.raw~dat.out$s_high)
+    
+    ### Hclust with Average and robust points
+    Hcd.mcd <- outliers.ranking(data= dat.out[dat.out$IsRobust,cols2], test.data= dat.out[,cols2], method = "sizeDiff", method.pars = NULL, clus = list(dist = "euclidean",alg = "hclust", meth = "average"), power = 1, verb = F)
+    
+    dat.out$Hclust.Ave.mcd75.raw <- -log(1-Hcd.mcd$prob.outliers)
+     #boxplot(dat.out$Hclust.Ave.mcd75.raw~dat.out$s_high)
+    
+### Get p-values for raw stats
+    #plot(dat.out$rho) #right tailed
+    #plot(dat.out$log.bf) #right tailed
+    #plot(dat.out$TW.Zscore) #right tailed
+    #plot(dat.out$xtx) #right tailed
+    
+    p.ranks <- stat_to_pvalue(dat.out, cols2, two.tailed=FALSE, right.tailed=TRUE)
+    names(p.ranks) <- names(dat.out)[cols2]
+
+    dat.out$DCMS.default <- DCMS(dat.out, cols2, dfp=p.ranks) 
+    #boxplot(dat.out$DCMS.default~dat.out$s_high)
+    
+    dat.out$DCMS.mcd75 <- DCMS(dat.out, cols2, 
+                          subset = dat.out$IsRobust, dfp=p.ranks)
+    #boxplot(dat.out$DCMS.mcd75~dat.out$s_high)
+    
+    dat.out$CSS <- CSS(dat.out, cols2, two.tailed=FALSE, right.tailed=TRUE) 
+    #par(mfrow=c(1,1))
+    #boxplot(dat.out$CSS~dat.out$s_high)
+
+    minusLogP.ranks <- -log(p.ranks,10)
+    
+    names(minusLogP.ranks) <- paste(names(p.ranks), ".minusLogP.rank", sep="")
+    str(minusLogP.ranks)
+    
+    # Calculate Md on p.ranks relative to 0 using robust estimation of cov
+    S_mcd0.75.p <- CovNAMcd(minusLogP.ranks, alpha=0.75)
+    dat.out$Md.rankp.mcd75 <- Mahalanobis(minusLogP.ranks, S= S_mcd0.75.p@cov, M=rep(0, ncol(minusLogP.ranks)))
+    #boxplot(dat.out$Md.rankp.mcd75~dat.out$s_high)
+    # plot(minusLogP.ranks, pch=19, cex=0.2, col=rgb(0,0,0,0.3))
+    
+     # Calculate Md on raw relative to least significant value using robust estimation of cov
+    mins <- apply(dat.out[,cols2], 2, min)
+    mins[c(2,4)] <- 0 # rho and Z-score would be relative to 0
+    dat.out$Md.mcd75.raw.relative <- Mahalanobis(dat.out, cols2, S= S_mcd0.75@cov, M=mins)
+    
+    if(i%%6==0){
+    pdf(paste("results/landsharc/", filelist[i],".pdf", sep=""), width=6, height=6)
+    par(mfrow=c(1,1))
+    
+    # Md raw vs. Md rank p-values
+    plot(dat.out$Md.mcd75.raw,dat.out$Md.rankp.mcd75, col=as.numeric(as.factor(dat.out$s_high)))
+    
+    # Md raw vs. Md raw relative
+    plot(log(dat.out$Md.mcd75.raw,10), log(dat.out$Md.mcd75.raw.relative,10), col=as.numeric(as.factor(dat.out$s_high)))
+    
+    # Md raw relative vs. Md rank p-values
+    plot(dat.out$Md.mcd75.raw.relative,dat.out$Md.rankp.mcd75, col=as.numeric(as.factor(dat.out$s_high)))
+    
+    # DCMS vs. to Md rank p-values
+   plot(dat.out$DCMS.mcd75, dat.out$Md.rankp.mcd75, col=as.numeric(as.factor(dat.out$s_high)))
+   
+   par(mfrow=c(4,4), mar=c(1,1,1,1))
+   plot(minusLogP.ranks, pch=19, cex=0.2, col=as.numeric(as.factor(dat.out$s_high)))
+   dev.off()
+    }
       
-      colnames(dat.out.subset)[(ncol(dat.out.subset)-3):
-                                 ncol(dat.out.subset)] <-
-      c( "Md.mcd.subset", "Hd.mcd.subset", "Kd.mcd.subset", "Nd.mcd.subset") 
-       head(dat.out.subset)
-  
-      dat.out.subset$dcms.ranks.mcd <- DCMS(p.ranks, subset=which(S_mcd@raw.wt==1))
-             
-      dat.out <- dat.out.subset
+    head(dat.out)
+    names(dat.out)
+    
+    ### Eval power for univariate and multivariate stats
       
-      ## remove these columns for this study
-      dat.out2 <- dat.out[,-which(names(dat.out) %in% c("LA.All", "SNP.LA2", "xtx.999perc", "bf.999perc", "rho.999perc",
-          "xtx.empP", "bf.empP", "rho.empP",
-          "xtx.q", "bf.q", "rho.q", "xtx.FDR01",
-          "bf.FDR01", "rho.FDR01", "TW.MinusLogP",
-          "TW.P", "K5.Zscore", "K5.MinusLogP",
-          "K5.P", "K5.999perc", "KTW.999perc",
-          "KTW", "L.q.K.5","L.q.K.TW","L.empQ.K.5","L.empQ.K.TW",
-          "Lq.K.5.FDR01","Lq.K.TW.FDR01","L.empQ.K.5.FDR0","L.empQ.K.TW.FDR01", "pca.empP.K10S","pca.q.K10S","pca.FDR01.K10S","pca.empP.K20S","pca.q.K20S","pca.FDR01.K20S","pca.empP.K10NS","pca.q.K10NS","pca.FDR01.K10NS", "L.empQ.K.5.FDR01", "pcs", "Hcd"))]
+    df.ep <- dat.out[,c(13:16,18:ncol(dat.out))] 
       
-      
-      dat.out2$MCDalpha <- alpha[j]
-      dat.out2$IsRobust <- S_mcd@raw.wt==1
-      head(dat.out2)
-      write.table(dat.out2,
-              paste("data/KatieSims_multivariate/",filelist[i],"_alpha",alpha[j], sep=""), col.names = TRUE, row.names=FALSE)
-  
-    dat.out <- dat.out2
-      
-    ### Calculate Empirical Power ###
-      out <- data.frame(infile = as.character(infile),
+    Power <- apply(df.ep, 2, getEmpPower,  dat.out$s_high==0)
+    
+    ## Write all output to data frame  
+    dat.out <- data.frame(dat.out, minusLogP.ranks)
+    write.table(dat.out, paste("results/landsharc/", filelist[i],".txt", sep=""), col.names = TRUE, row.names=FALSE)
+    
+    
+    out <- data.frame(infile = as.character(infile),
                demog = as.character(dat.out$demog[1]),
-               xtx.ep = getEmpPower(dat.out$xtx, dat.out$s_high==0),
-               bf.ep = getEmpPower(dat.out$log.bf, dat.out$s_high==0),
-               rho.ep = getEmpPower(dat.out$rho, dat.out$s_high==0),
-               lfmm.ep = getEmpPower(dat.out$TW.Zscore, dat.out$s_high==0),
-               Hcd.ep = getEmpPower(dat.out$Hcd.default, dat.out$s_high==0),
-               pcs.ep = getEmpPower(dat.out$pcs.default, dat.out$s_high==0),
-               alpha = alpha[j],
-               
-               Md.default.ep = getEmpPower(dat.out$Md.default, dat.out$s_high==0),
-               Hd.default.ep = getEmpPower(dat.out$Hd.default, dat.out$s_high==0),
-               Kd.default.ep = getEmpPower(dat.out$Kd.default, dat.out$s_high==0),
-               Nd.default.ep = getEmpPower(dat.out$Nd.default, dat.out$s_high==0),
-                
-               Md.mcd.subset.ep = getEmpPower(dat.out$Md.mcd.subset, dat.out$s_high==0),
-               Hd.mcd.subset.ep = getEmpPower(dat.out$Hd.mcd.subset, dat.out$s_high==0),
-               Kd.mcd.subset.ep = getEmpPower(dat.out$Kd.mcd.subset, dat.out$s_high==0),
-               Nd.mcd.subset.ep = getEmpPower(dat.out$Nd.mcd.subset, dat.out$s_high==0),
-               
-              dcms.ranks.ep =  getEmpPower(dat.out$dcms.ranks, dat.out$s_high==0),
-              
-              dcms.ranks.mcd.ep =  getEmpPower(dat.out$dcms.ranks.mcd, dat.out$s_high==0),
-               
-              Md.mcd.subset.fp = sum(p.adjust(1-returnEmpP(dat.out$Md.mcd.subset[dat.out$s_high==0], dat.out$Md.mcd.subset[S_mcd@raw.wt==1 & dat.out$s_high==0]),method="BH")<0.05)/9900,
-              
                ProportionNeutralMCDRobust,
                ProportionS0.005MCDRobust,
                ProportionS0.01MCDRobust,
                ProportionS0.1MCDRobust
       )
-    if (i==1 & j==1){
-      write.table(out, file = paste(resultsdir,"LandsharcSummary2.txt", sep=""), append=FALSE, col.names=TRUE, row.names=FALSE)
+    
+      allout <- cbind(out, data.frame(t(Power)))
+    
+        
+    if (i==1){
+      write.table(allout, file = paste(resultsdir,"LandsharcSummary3.txt", sep=""), append=FALSE, col.names=TRUE, row.names=FALSE)
     }else{
-        write.table(out, file = paste(resultsdir,"LandsharcSummary2.txt",sep=""), append=TRUE, col.names=FALSE, row.names=FALSE) 
+        write.table(allout, file = paste(resultsdir,"LandsharcSummary3.txt",sep=""), append=TRUE, col.names=FALSE, row.names=FALSE) 
                   }
-    #summarydf <- rbind(summarydf,out)
-  } # end loop through alpha
 } # end loop through files
-#write.table(summarydf,file = , sep=""))
 ```

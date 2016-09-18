@@ -11,8 +11,8 @@
 # colnums <- c(10,11,12,15)
 #source("misc/evalsims/distanceFunctionsOther.R")
 
-Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv), 
-                  whichstats=c("pcs", "hclust", "md", "hd", "kd", "nd")){
+Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M=NULL, subset=1:nrow(dfv), 
+                  whichstats=c("md", "hd", "kd", "nd")){
  
   ### Check for duplicated rows and abort
   if (any(duplicated(dfv))) {
@@ -28,32 +28,6 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv),
     rows.keep <- !is.na(rowSums(dfv2))
     dfv2 <- dfv2[rows.keep,]
     writeLines(c("Rows with NAs were removed.  The data now has this many rows:", nrow(dfv2)))
-  }
-
-  if("pcs" %in% whichstats){
-  writeLines("Calculating outlierliness based on FastPCS...")
-    x<- system.time({
-      tx <- try(pcs<-FastPCS.out(dfv2))
-      if("try-error" %in% class(tx)){
-        pcs <- NA
-      }
-    })
-    print(x)
-  }else{
-    pcs="NotCalc"
-  }
-
-  if("hclust" %in% whichstats){
-  writeLines("Calculating outlierliness based on clustering (DmWR)...")
-     x<- system.time({
-       tx <- try(Hcd <- hclust.ranking(dfv2))
-       if("try-error" %in% class(tx)){
-         Hcd <- NA
-       }
-     })
-     print(x)
-  }else{
-    Hcd="NotCalc"
   }
 
   if("md" %in% whichstats){
@@ -83,7 +57,7 @@ Getdf <- function(dfv, colnums=1:ncol(dfv), S=NULL, M= NULL, subset=1:nrow(dfv),
   if("kd" %in% whichstats){
   writeLines("Calculating outlierliness based on kernel density and given bandwith (assume covar)...")
     x<- system.time({
-      bw <- c(seq(0.01,0.1,by=0.01),seq(0.2,1,by=0.1), seq(1.5,5,by=0.5))
+      
       #plot(bw, Kd.ML)
      tx <- try({
       Kd.ML <- kernelDeviance(dfv2, bandwidth = bw, S=S, subset=subset)
