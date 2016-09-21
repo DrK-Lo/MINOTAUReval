@@ -8,20 +8,19 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #setwd("/Users/katie/Desktop/MINOTAUReval")
-```
 
-First, compare the cutoff value for the 99% CI to the cutoff based on the maximum of the robust points based on the MCD with $\alpha=0.75$ or $\alpha=0.99$.
-
-```{r compare cutoffs}
 df <- read.table("results/dogBreedsPower.txt", header=TRUE)
 head(df)
 
 all_stats <- levels(df$stat)
 all_breeds <- levels(df$breed)
 
+all_stats
+```
 
+```{r compare cutoffs}
 
-MakePowerHeatmap <- function(pow_var, maintext, nsnps){
+MakePowerHeatmap <- function(pow_var, maintext, nsnps, stats4plot){
   powermat <- matrix(NA, ncol=length(all_stats), nrow=length(all_breeds))
   colnames(powermat) = df$stat[1:length(all_stats)]
   rownames(powermat) = all_breeds
@@ -34,111 +33,101 @@ MakePowerHeatmap <- function(pow_var, maintext, nsnps){
   }  
   powermat
   
-  stats4plot <- c("unstd_iHS", "win51_H12", "win51_pi", "win51_TajD", "Md.mcd.subset.75")
-  
   powmat2 <- powermat[,which(colnames(powermat) %in% stats4plot)]
-  powmat2 <- powmat2[,c(1,2,5,4,3)]
+  head(powmat2)
+  
+  powmat2 <- powmat2[,match(stats4plot, colnames(powmat2))] # reorganize to be in order of stats4plot
+  powmat2 <- cbind(powmat2[,1:4], br=NA, powmat2[,5:ncol(powmat2)])
   powmat2
   library(fields)
   
   par(oma=c(0,0,0,0), mar=c(8,8,2,6))
-  colvect <- two.colors(10, start="white",middle="grey", end="darkblue")
-  image(1:5, 1:25, t(powmat2), col = colvect ,axes= FALSE,
+  colvect <- two.colors(50, start="white",middle="grey", end="darkblue")
+  image(1:ncol(powmat2), 1:nrow(powmat2), t(powmat2), col = colvect ,axes= FALSE,
         xlab="", ylab="", main= maintext, cex.main=0.8)
   ##### add axis
-  axis(1,1:5,lab=colnames(powmat2), las=2, cex.axis=1)
-  axis(2,1:25,lab=rownames(powmat2), las=2, cex.axis=0.6)#0.5)
+  axis(1,1:ncol(powmat2),lab=colnames(powmat2), las=2, cex.axis=1)
+  axis(2,1:nrow(powmat2),lab=rownames(powmat2), las=2, cex.axis=0.6)#0.5)
   box()
   par(mar=c(8,8,0.5,0))
   image.plot(t(powmat2), col = colvect, legend.only = TRUE, legend.lab = "Power", legend.shrink = 0.5)
 }#end function
 
-pow_var <- df$power.robust75
-
 pdf("results/DogEmpiricalPower.pdf", width=6, height=8)
 # least stringent
-MakePowerHeatmap(pow_var, "(at least 1 SNP) > (overall most robust point)\n 50 SNP window", nsnps=1)
-MakePowerHeatmap(pow_var, "(at least 5 SNPs) > (overall most point)\n 50 SNP window", nsnps=5)
 
-#more stringent
-MakePowerHeatmap(df$power.CI.90, "(at least 1 SNP) > 90% CI\n 50 SNP window", nsnps=1)
-MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 90% CI\n 50 SNP window", nsnps=5)
+stats4plot1 <- c("unstd_iHS", "win51_H12", "win51_pi", "win51_TajD", "Md.mcd75.raw",  "DCMS.mcd75")
+  
+  MakePowerHeatmap(df$power.robust75, "(at least 1 SNP) > (overall most robust point)\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.robust75, "(at least 5 SNPs) > (overall most point)\n 50 SNP window", nsnps=5, stats4plot1)
+    
+    #more stringent
+  MakePowerHeatmap(df$power.CI.90, "(at least 1 SNP) > 90% CI\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 90% CI\n 50 SNP window", nsnps=5, stats4plot1)
+  
+  ### Most stringent
+  MakePowerHeatmap(df$power.CI.95, "(at least 1 SNP) > 95% CI\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 95% CI\n 50 SNP window", nsnps=5, stats4plot1)
 
-### Most stringent
-MakePowerHeatmap(df$power.CI.95, "(at least 1 SNP) > 95% CI\n 50 SNP window", nsnps=1)
-MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 95% CI\n 50 SNP window", nsnps=5)
+
+ stats4plot2 <- c( "CSS", "Hd.mcd75.raw", "Nd.mcd75.raw")
 dev.off()
 ```  
 
 
-```{r compare cutoffs}
-df <- read.table("results/dogBreedsPower.txt", header=TRUE)
-head(df)
+```{r boxplots of cutoffs}
 
 all_stats <- levels(df$stat)
 for (i in seq_along(all_stats)){  
   st <- all_stats[i]
   d2 <- df[df$stat==st,]
   l <- reshape(d2, 
-               varying = c("cutoff.CI", "cutoff.robust75", "cutoff.robust99"),
+               varying = c("cutoff.CI.95", "cutoff.CI.90", "cutoff.robust75"),
                v.names="cutoff",
                timevar="type",
-               times= c("cutoff.CI", "cutoff.robust75", "cutoff.robust99"),
+               times= c("cutoff.CI.95", "cutoff.CI.90", "cutoff.robust75"),
                direction="long")
   head(l)
   par(mar=c(8,4,2,1))
-  boxplot(l$cutoff~l$type, ylab="Cutoff", las=2, names=c("99% CI","Maximum of MCD\nrobust points\nalpha=0.75","Maximum of MCD\nrobust points\nalpha=0.99"), main=st)
+  boxplot(l$cutoff~l$type, ylab="Cutoff", las=2, names=c("95% CI","99% CI","Max robust point"), main=st)
 }#end loop
 ```
 
 Next, compare power.
 ```{r compare power}
-### First relevel the 
+### First relevel the stats for plotting in right order
 levels(df$stat)
 str(df$stat)
 df$stat <- factor(df$stat, levels=c("unstd_iHS", "win51_H12",
                                     "win51_pi", "win51_TajD",
-                                    "pcs.default", "Hcd.default",
-                                    "Md.default", "Hd.default",
-                                    "Kd.default","Nd.default",
-                                    "Md.mcd.subset.75", 
-                                    "Hd.mcd.subset.75",
-                                    "Kd.mcd.subset.75",
-                                    "Nd.mcd.subset.75",
-                                    "Md.mcd.subset.99", 
-                                    "Hd.mcd.subset.99",
-                                    "Kd.mcd.subset.99",
-                                    "Nd.mcd.subset.99"                                    ))
-head(df$stat)
+                                    "Md.default.raw", "Hd.default.raw",
+                                    "Nd.default.raw", "DCMS.default",
+                                    "Md.mcd75.raw", 
+                                    "Hd.mcd75.raw",
+                                    "Nd.mcd75.raw",
+                                    "DCMS.mcd75", "CSS"))
+levels(df$stat)
 
 ### Plot univariate stats in grey, default in light blue, and MCD in magenta
 
 ### First compare power univariate, default, and MCD alpha=0.75, using robust points as a cutoff
 
-d3 <- df[df$stat %in% c("unstd_iHS", "win51_H12",
-                                    "win51_pi", "win51_TajD",
-                        "Md.default", "Hd.default",
-                                    "Kd.default","Nd.default",
-                                    "Md.mcd.subset.75", 
-                                    "Hd.mcd.subset.75",
-                                    "Kd.mcd.subset.75",
-                                    "Nd.mcd.subset.75"),]
-
-
+d3 <- df[df$stat %in% stats4plot1,]
 dim(d3)
 d3$stat <- factor(d3$stat)
+names(d3)
 
-pdf("results/DogPower_alpha0.75.pdf", width=8, height=4)
-  par(mar=c(4,4,1,1))
-  boxplot(d3$power.robust75~d3$stat, las=1,
-          col=c(rep("grey",4), rep("lightblue", 4),
-                rep("magenta", 4)),
-          ylab=expression(paste(
-            "Power using robust points as null ", 
-            alpha," = 0.75")),
-          names=c("iHS", "H12", expression(pi), 
-                  "Taj. D",
-          rep(c("Md", "Hd", "Kd", "Nd"), 2)))
+pdf("results/DogPower_alpha0.75.pdf", width=6, height=4)
+  par(mar=c(8,4,2,1))
+  boxplot(d3$power.robust75[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="Max Robust Point 0.75, nsnps=1")
+    boxplot(d3$power.robust75[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="Max Robust Point 0.75, nsnps=5")
+  
+    boxplot(d3$power.CI.90[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="90% CI, nsnps=1")
+    boxplot(d3$power.CI.90[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="90% CI, nsnps=5")
+
+    boxplot(d3$power.CI.95[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="95% CI, nsnps=1")
+    boxplot(d3$power.CI.95[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="95% CI, nsnps=5")
+
 dev.off()
 
 ### Next compare power univariate, default, and MCD alpha=0.99, using robust points as a cutoff

@@ -1,5 +1,5 @@
 ---
-title: "Eval Landsharc sims"
+title: "Dog data- calc power"
 author: "Katie Lotterhos"
 date: "May 24, 2016"
 output: html_document
@@ -10,10 +10,7 @@ output: html_document
 makeplots=FALSE
 
 #setwd("/Users/katie/Desktop/MINOTAUReval")
-source("evalsims/ComparePlot2.R")
-source("evalsims/distanceFunctionsOther.R")
 source("evalsims/getEmpiricalP3_BH.R")
-source("evalsims/Getdf.R")
 
 if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
 if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
@@ -25,7 +22,7 @@ if(!("qvalue" %in% installed.packages())){
 library(qvalue)
 library(rrcovNA)
 library(devtools)
-#install_github("NESCent/MINOTAUR")#, build_vignettes=TRUE)
+install_github("NESCent/MINOTAUR", ref="develop")#, build_vignettes=TRUE)
 library(MINOTAUR)
 library(plyr)
 
@@ -43,8 +40,6 @@ head(genelist)
 col_match <- sub(".csv", "", sub("set1_full_","", filelist))
 col_match %in% names(genelist)
   # should be all trues
-
-sessionInfo()
 ```
 
 ### Loop through each dataset
@@ -107,12 +102,23 @@ for (i in 1:length(filelist)){
   
   x <- 1:nrow(dat)
   
+  #############################
   ### Function to determine power to detect known loci
 getPower <- function(column, upper=TRUE, nsnps=1){
     # upper=TRUE tests for outliers in the upper 95%
     # upper=FALSE tests for outliers lower 5% of the test statistic
     # 25 SNPs tested on either side of SNP
+  
     variable <- dat[,column]
+    if(all(is.na(variable))){
+      return(data.frame(cutoff.CI.95=NA,
+                           cutoff.CI.90=NA,
+                           cutoff.robust75=NA, 
+                     power.CI.95=NA,
+                     power.CI.90=NA,
+                      power.robust75=NA
+    ))
+    }else{
     print(names(dat)[column])
     if (upper){
       (CI.95 <- quantile(variable,probs = 0.95, type=1))
@@ -123,7 +129,7 @@ getPower <- function(column, upper=TRUE, nsnps=1){
       CI.90 <- quantile(variable,probs = 0.1, type=1)
     }
     
-    row <- CI_out.95 <- CI_out.90 <- CI_robust_75 <- CI_robust_99 <- c()
+    row <- CI_out.95 <- CI_out.90 <- CI_robust_75 <- c()
     for (k in 1:nrow(sel_snps)){
         row[k] <- which(dat$chr == sel_snps$chr[k] 
                         & dat$bp > sel_snps$SNP[k])[1]
@@ -132,14 +138,10 @@ getPower <- function(column, upper=TRUE, nsnps=1){
         if(upper){
           CI_out.95[k] <- sum((variable[cond]) > CI.95)
           CI_out.90[k] <- sum((variable[cond]) > CI.90)
-          var_75 <- max(variable[dat$robust75])
-          var_99 <- max(variable[dat$robust99])
-            # at least one SNP in window has a signal
-            # greater than the criteria
+          var_75 <- max(variable[dat$IsRobust])
+
           CI_robust_75[k] <- sum((variable[cond]) >
                                    var_75) 
-          CI_robust_99[k] <- sum((variable[cond]) >
-                                   var_99) 
         }# end if upper
 
         if (!upper){
@@ -147,44 +149,37 @@ getPower <- function(column, upper=TRUE, nsnps=1){
           CI_out.90[k] <- sum((variable[cond]) < CI.90)
                 # at least five SNPs in window has a signal
                 # greater than the criteria
-          var_75 <- min(variable[dat$robust75])
-          var_99 <- min(variable[dat$robust99])
+          var_75 <- min(variable[dat$IsRobust])
           CI_robust_75[k] <- sum((variable[cond]) <
                                    var_75)
-          CI_robust_99[k] <- sum((variable[cond]) <
-                                      var_99)
         }# end if !upper
     }# end loop though focal SNPs
-    out=data.frame(CI_out.95, CI_out.90, CI_robust_75, CI_robust_99)
+    out=data.frame(CI_out.95, CI_out.90, CI_robust_75)
     #print(out)
     power = (colSums(out>=nsnps))/nrow(out)
     power.out = data.frame(cutoff.CI.95=CI.95,
                            cutoff.CI.90=CI.90,
                            cutoff.robust75=var_75, 
-                     cutoff.robust99=var_99,
                      power.CI.95=power[1],
                      power.CI.90=power[2],
-                      power.robust75=power[3],
-                      power.robust99=power[4]
+                      power.robust75=power[3]
     )
     return(power.out)
-  }
-  ### End function
+    }### end else
+  }### End function
   
-  ### Get power
+  ### Get power for upper tail
   whichcols <- which(names(dat) %in% c("unstd_iHS", "win51_H12", 
-                 "pcs.default","Hcd.default", 
-                 "Md.default", "Hd.default",
-                 "Kd.default", "Nd.default", 
-                 "Md.mcd.subset.75", "Hd.mcd.subset.75", 
-                 "Kd.mcd.subset.75", "Nd.mcd.subset.75",
-                 "Md.mcd.subset.99", "Hd.mcd.subset.99", 
-                 "Kd.mcd.subset.99", "Nd.mcd.subset.99")
+                 "Md.default.raw","Hd.default.raw", 
+                 "Nd.default.raw", "Md.mcd75.raw",
+                 "Hd.mcd75.raw", "Nd.mcd75.raw", 
+                 "DCMS.default", "DCMS.mcd75", 
+                 "CSS", "Md.rankp.mcd75")
   )
   
 for (nsnps in 1:5){  
   a<- lapply(whichcols, getPower, nsnps=nsnps)
-  a<-data.frame(matrix(unlist(a), ncol = 8, byrow=TRUE))
+  a<-data.frame(matrix(unlist(a), ncol = length(a[[1]]), byrow=TRUE))
   names(a) <- names(getPower(7))
   a$stat <- names(dat)[whichcols]
   a$upper<-TRUE
@@ -193,7 +188,7 @@ for (nsnps in 1:5){
   
   whichcolsMin <- which(names(dat) %in% c("win51_TajD", "win51_pi"))
   b<-lapply(whichcolsMin, getPower, upper=FALSE, nsnps=nsnps)
-  b<-data.frame(matrix(unlist(b), ncol = 8, byrow=TRUE))
+  b<-data.frame(matrix(unlist(b), ncol = length(b[[1]]), byrow=TRUE))
   names(b) <- names(getPower(7))
   b$stat <- names(dat)[whichcolsMin]
   b$upper <- FALSE
@@ -208,7 +203,7 @@ for (nsnps in 1:5){
     write.table(final, file="results/dogBreedsPower.txt", append=TRUE, row.names=FALSE, col.names=FALSE)
   }
 }#end loop through nsnps
-} #end loop
+} #end loop through filelist
   
   ### Plotting ###
   ################
@@ -279,4 +274,9 @@ if(makeplots==TRUE){
 }
 
 
+```
+
+### Session info
+```{r, label=Session info}
+sessionInfo()
 ```

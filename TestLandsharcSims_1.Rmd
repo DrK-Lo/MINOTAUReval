@@ -4,6 +4,11 @@ author: "Katie Lotterhos"
 date: "May 24, 2016"
 output: html_document
 ---
+setwd("/Users/katie/Desktop/Teaching/201609 Fall Ecological and Conservation Genetics/")
+Class.list <- read.csv("EEMB3465.class_list2016.csv")
+head(Class.list)
+sample(Class.list$First.Name[Class.list$Level=="undergrad"], 4)
+
 ### Load packages and data
 ```{r setup, include=FALSE}
 #setwd("/Users/katie/Desktop/MINOTAUReval")
