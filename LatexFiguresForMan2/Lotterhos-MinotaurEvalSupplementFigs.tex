@@ -47,11 +47,17 @@ Lotterhos et al. 2017. (Add Title Here). Methods in Ecology and Evolution.
 
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/S1-LandsharcCompareToNeutralCovMat.pdf}
+\includegraphics[width=6in]{../figures_man2/S1-bivariate.pdf}
 \end{center}
-\caption[]{Comparison of the mean absolute difference between the variance-covariance matrix among the univariate statistics calculated using (i) all the data, (ii) the MCD estimate using 75\% of the dataset, and (iii) the MCD estimate using 99\% of the dataset.  Boxplots are summarized over all demographies and sampling designs.
+\caption[]{Conceptual examples of the multivariate distance measures described in Verity et al. 2017  compared in this study (kernel density deviance was not included due to slow run times).}
+ \label{fig:???}
+\end{figure}
 
-{\bf TO DO: Should I switch MCD99 and MCD75 here, since MCD99 will be closer to "all data" than MCD75?}
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=4in]{../figures_man2/S2-LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf}
+\end{center}
+\caption[]{Difference between the multivariate location and scatter estimated by the robust method and the true neutral estimate. MCD: minimum covariance determinant; PCS: projection congruent subset.
 } 
  \label{fig:???}
 \end{figure}
@@ -61,19 +67,25 @@ Lotterhos et al. 2017. (Add Title Here). Methods in Ecology and Evolution.
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[height=6in]{../figures_man2/S2-LandsharcProportionSelectedMCD.pdf}
+\includegraphics[height=6in]{../figures_man2/S3-LandsharcProportionSelectedMCD.pdf}
 \end{center}
 \caption[]{Evaluation of whether loci affected by selection were identified as 'robust' points (e.g., not outliers) by the MCD algorithm. Loci under relatively weak selection (s=0.005) are in the left column, well loci under moderate selection are in the right column (s=0.01). The horizontal dashed line represents the null expectation, based on the proportion of loci under that strength of selection in the entire dataset. The MCD never identified loci simulated under strong selection (s=0.1) as robust (expected = 0.001 in IBD and 0.0017 in IM, 1R, and 2R; observed = 0 across all simulations).} 
  \label{fig:???}
 \end{figure}
 
-
-
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=4in]{../figures_man2/S4-LandsharcComparePowerMCDminusPowerDefaultByDemog.pdf}
+\end{center}
+\caption[]{The difference in empirical power of the statistic to detect selection with and without the robust points identified by minimum covariance determinant (MCD) used in the calculation for the four demographies: island model (IM), isolation by distance (IBD), range expansion from one refuge (1R), range expansion from two refugia (2R). } 
+ \label{fig:???}
+\end{figure}
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/S3-LandsharcFalsePositivesMCD.pdf}
+\includegraphics[width=4in]{../figures_man2/S5-LandsharcFalsePositivesMCD.pdf}
 \end{center}
 \caption[]{The number of false discoveries (neutral loci inferred to be outliers, out of 9900 total neutral loci in the dataset) resulting if robust points identified by the MCD are used as an empirical null distribution.} 
  \label{fig:???}
@@ -82,20 +94,79 @@ Lotterhos et al. 2017. (Add Title Here). Methods in Ecology and Evolution.
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/S4-DogDataCompareLocationScatter.pdf}
+\includegraphics[width=6in]{../figures_man2/S6-LandsharcAverageSignals.pdf}
 \end{center}
-\caption[]{A comparison of the mean difference in the multivariate location (mean) and scatter (covariance) on the dog dataset based on the robust points identified by the MCD algorithm compared to that based on all the data.} 
+\caption[]{Average signals as a function of type of locus for a univariate statistic (top) and a multivariate distance (bottom).}
  \label{fig:???}
 \end{figure}
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/S5-DogPower_alpha099.pdf}
+\includegraphics[width=6in]{../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf}
 \end{center}
-\caption[]{Comparison of power of different univariate and multivariate statistics to detect known QTL in the dog dataset. Power was evaluated as the proportion of known QTL with a signal above the maximum value of that statistic at the robust points identified by the MCD with $\alpha=0.75$. Multivariate "default" was calculated using all the data (same as Figure 4 in the main paper), while "MCD" was calculated using the MCD estimates of multivariate mean and covariance as well as the robust points in the calculation, if applicable. Statistics evaluated include integrated haplotype score (iHS), H12, Tajima's D (Taj. D), nucleotide diversity ($\pi$), Mahalanobis distance (Md), harmonic mean distance (Hd), kernel deviance (Kd), and nearest neighbor distance (Nd).} 
+\caption[]{Comparison among the compound measures for distance in the maximum of signal from the focal SNP versus the significance of the maximum signal, across all dog breeds and loci.. Upper left corner of the plot is higher performance.}
  \label{fig:???}
 \end{figure}
 
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=6in]{../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf}
+\end{center}
+\caption[]{Comparison among the compound measures for steepness in the maximum of signal versus the significance of the maximum signal, across all dog breeds and loci.. Upper right corner of the plot is higher performance.}
+ \label{fig:???}
+\end{figure}
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[height=6in]{../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf}
+\end{center}
+\caption[]{Comparison between any compound measure with versus without the MCD, for steepness in the left column and minus-log ranked $P$-value in the right column, across all dog breeds and loci.}
+ \label{fig:???}
+\end{figure}
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=6in]{../figures_man2/S10-Dog-CompareVarNd.pdf}
+\end{center}
+\caption[]{Boxplot showing standard deviation in the signal at 10 SNPs around the max SNP, across all dog breeds and loci. The default nearest-neighbor distance (Nd.default.raw) is compared to the Nd with the MCD (Nd.mcd75.raw), showing higher variance in the former because of spurious signals.}
+ \label{fig:???}
+\end{figure}
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[height=6in]{../figures_man2/S11-Dog_heatmap_steepness_compare_stats.pdf}
+\end{center}
+\caption[]{Heatmap of steepness of the selection signal evaluated for each individual locus in the empirical dog dataset. Zero or negative values of steepness indicate the signal is absent or in the wrong direction.
+The univariate statistics include iHS, H12, nucleotide diversity $\pi$, and Tajima's $D$. The compound measures include: the Mahalanobis distance based on minus-log fractional $P$-values (Md-rank-$P$), the decorrelated composite of multiple signals (DCMS), the Mahalanobis distance based on the raw statistics, and the composite signal of selection (CSS). The row labels indicate the dog breed, chromosome, base pair of the focal SNP, and the allele frequency of the focal SNP.
+
+TO DO: EDIT X-AXIS LABELS}
+ \label{fig:???}
+\end{figure}
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[height=6in]{../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf}
+\end{center}
+\caption[]{Heatmap of distance in kilobases of the selection signal (max SNP) from the focal SNP, evaluated for each individual locus in the empirical dog dataset. Cases in which the focal SNP was genotyped and the maximum signal in the window was at this SNP (i.e., distance = 0) are colored dark red.
+The univariate statistics include iHS, H12, nucleotide diversity $\pi$, and Tajima's $D$. The compound measures include: the Mahalanobis distance based on minus-log fractional $P$-values (Md-rank-$P$), the decorrelated composite of multiple signals (DCMS), the Mahalanobis distance based on the raw statistics, and the composite signal of selection (CSS). The row labels indicate the dog breed, chromosome, base pair of the focal SNP, and the allele frequency of the focal SNP.
+
+TO DO: EDIT X-AXIS LABELS}
+ \label{fig:???}
+\end{figure}
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=6in]{../figures_man2/S13-CompareMdRankPandDCMS.pdf}
+\end{center}
+\caption[]{Comparison of Md-rank-P and DCMS on P-values obtained from a bivariate normal distribution. Black circles indicate points less than the 0.95\% of the compound measure and blue crosses indicate points above this threshold. In this toy example, some points are significant by both the $x$ and $y$ variables (points in upper right side of the graph), while other points are only significant by $x$ variable (lower right part of the graph).}
+ \label{fig:???}
+\end{figure}
 
 \end{document}

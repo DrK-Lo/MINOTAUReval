@@ -17,7 +17,7 @@ if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
 library(qvalue)
 library(rrcovNA)
 library(devtools)
-install_github("NESCent/MINOTAUR", ref="develop", force=TRUE)#, build_vignettes=TRUE)
+#install_github("NESCent/MINOTAUR", ref="develop")#, build_vignettes=TRUE)
 library(MINOTAUR)
 library(DMwR)
 
@@ -37,45 +37,45 @@ The following chunk of code does for each dataset:
 3) calculate multivariate distances based on MCD covariance matrix
 
 
-```{r loop1}
-cov_summary <- data.frame(filelist,Sall_Smcd0.75_cov=NA, Sall_Smcd0.75_mean=NA, Sall_Smcd0.90_cov=NA, Sall_Smcd0.90_mean=NA)
-head(cov_summary)
-for (i in 1:length(filelist)){
-   print(c(i, filelist[i]))
-  infile <- paste(headdir, filelist[i], sep="")
-  dat <- read.csv(infile, header=TRUE)
-  head(dat)
-   dat2 <- dat[complete.cases(dat),]# #don't use complete cases if want to keep all data
-  cols <- which(names(dat) %in% c("unstd_iHS", 
-                                  "win51_pi",
-                                  "win51_TajD",
-                                  "win51_H12"))
-  # Covariance of all loci
-    Sall <- cov(dat2[complete.cases(dat2),cols])
-    Sall
-  # Covariance of MCD 75
-    S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
-    #S_mcd75
-  # Covariance of MCD 99
-    S_mcd90 <- CovNAMcd(dat2[,cols], alpha=0.90)
-    #S_mcd99    
-    
-  ## Mean difference between covmats
-    Sall_mean <- colMeans(dat2[complete.cases(dat2),cols])
-    
-    cov_summary$Sall_Smcd0.75_cov[i] <- mean(abs(Sall-S_mcd75@cov))
-    cov_summary$Sall_Smcd0.75_mean[i] <- mean(abs( Sall_mean-S_mcd75@center))
-    cov_summary$Sall_Smcd0.90_cov[i] <- mean(abs(Sall-S_mcd90@cov)) 
-    cov_summary$Sall_Smcd0.90_mean[i] <- mean(abs(Sall_mean-S_mcd90@center))
-    print(cov_summary[i,])
-}
-   write.csv(cov_summary, file = paste(outdir,"covsummary.csv", sep=""))
-``` 
+# ```{r loop1}
+# cov_summary <- data.frame(filelist,Sall_Smcd0.75_cov=NA, Sall_Smcd0.75_mean=NA, Sall_Smcd0.90_cov=NA, Sall_Smcd0.90_mean=NA)
+# head(cov_summary)
+# for (i in 1:length(filelist)){
+#    print(c(i, filelist[i]))
+#   infile <- paste(headdir, filelist[i], sep="")
+#   dat <- read.csv(infile, header=TRUE)
+#   head(dat)
+#    dat2 <- dat[complete.cases(dat),]# #don't use complete cases if want to keep all data
+#   cols <- which(names(dat) %in% c("unstd_iHS", 
+#                                   "win51_pi",
+#                                   "win51_TajD",
+#                                   "win51_H12"))
+#   # Covariance of all loci
+#     Sall <- cov(dat2[complete.cases(dat2),cols])
+#     Sall
+#   # Covariance of MCD 75
+#     S_mcd75 <- CovNAMcd(dat2[,cols], alpha=0.75)
+#     #S_mcd75
+#   # Covariance of MCD 99
+#     S_mcd90 <- CovNAMcd(dat2[,cols], alpha=0.90)
+#     #S_mcd99    
+#     
+#   ## Mean difference between covmats
+#     Sall_mean <- colMeans(dat2[complete.cases(dat2),cols])
+#     
+#     cov_summary$Sall_Smcd0.75_cov[i] <- mean(abs(Sall-S_mcd75@cov))
+#     cov_summary$Sall_Smcd0.75_mean[i] <- mean(abs( Sall_mean-S_mcd75@center))
+#     cov_summary$Sall_Smcd0.90_cov[i] <- mean(abs(Sall-S_mcd90@cov)) 
+#     cov_summary$Sall_Smcd0.90_mean[i] <- mean(abs(Sall_mean-S_mcd90@center))
+#     print(cov_summary[i,])
+# }
+#    write.csv(cov_summary, file = paste(outdir,"covsummary.csv", sep=""))
+#``` 
 
 
 
 ```{r loop2}    
-for (i in c(7,11:length(filelist))){
+for (i in c(1:length(filelist))){
   print(c(i, filelist[i]))
   infile <- paste(headdir, filelist[i], sep="")
   dat <- read.csv(infile, header=TRUE)
@@ -90,6 +90,8 @@ for (i in c(7,11:length(filelist))){
   
     
   dat.out <- dat2[,c(1:4,cols)] 
+  sum(duplicated(dat.out))
+  
   cols2 <- which(names(dat.out) %in% c("unstd_iHS", 
                                   "win51_pi",
                                   "win51_TajD",
@@ -98,36 +100,32 @@ for (i in c(7,11:length(filelist))){
  ### MCD alpha = 0.75
     S_mcd0.75 <- CovNAMcd(dat.out[,cols2], alpha=0.75)
     dat.out$IsRobust <- S_mcd0.75@raw.wt==1
+    sum(dat.out$IsRobust)/nrow(dat.out)
     
 ### Get multivariate distance stats based on 
 ### raw statistics and all points
-    try(dat.out$Md.default.raw <- Mahalanobis(dat.out, column.nums = cols2))
+    dat.out$Md.default.raw <- Mahalanobis(dat.out, column.nums = cols2)
     
-    try(dat.out$Hd.default.raw <- harmonicDist(dat.out, column.nums = cols2))
+    dat.out$Hd.default.raw <- harmonicDist(dat.out, column.nums = cols2)
     
+    # in general I've been having trouble with the Kd.ML
     #Kd.ML <- kernelDeviance(dat.out, cols2, bandwidth = bw)
     #(bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]])
     #dat.out$Kd.default.raw <- kernelDist(dat.out, column.nums = cols2, bandwidth = bw.best)
     
-    try(dat.out$Nd.default.raw <- neighborDist(dat.out, column.nums = cols2))
+    dat.out$Nd.default.raw <- neighborDist(dat.out, column.nums = cols2)
     #head(dat.out)
     
   ### Get multivariate distance stats based on 
 ### raw statistics and MCD 0.75
-    try(dat.out$Md.mcd75.raw <- Mahalanobis(dat.out, column.nums = cols2, S=S_mcd0.75@cov, M=S_mcd0.75@center))
-    
-    try(dat.out$Hd.mcd75.raw <- harmonicDist(dat.out, column.nums = cols2, S = S_mcd0.75@cov, subset = dat.out$IsRobust))
+   dat.out$Md.mcd75.raw <- Mahalanobis(dat.out, column.nums = cols2, S=S_mcd0.75@cov, M=S_mcd0.75@center)
     
     #Kd.ML <- kernelDeviance(dat.out, cols2, S = S_mcd0.75@cov, bandwidth = bw,subset = dat.out$IsRobust)
     #(bw.best <- bw[which(Kd.ML==min(Kd.ML))[1]])
     #dat.out$Kd.mcd75.raw <- kernelDist(dat.out, column.nums = cols2, bandwidth = bw.best, S = S_mcd0.75@cov, subset = dat.out$IsRobust)
-    
-    try(dat.out$Nd.mcd75.raw <- neighborDist(dat.out, column.nums = cols2,  S = S_mcd0.75@cov, subset = dat.out$IsRobust))
-    #head(dat.out)
-
+  
     print("dist done")
 
- 
     ### Get p-values for raw stats
     #plot(dat.out$unstd_iHS) #right tailed
     #plot(dat.out$win51_pi) #left tailed
@@ -140,16 +138,16 @@ for (i in c(7,11:length(filelist))){
     p.ranks <- cbind(p.ranks1[,1], p.ranks2, p.ranks1[,2])
     names(p.ranks) <- names(dat.out)[cols2]
 
-    try(dat.out$DCMS.default <- DCMS(dat.out, cols2, dfp=p.ranks))
+    dat.out$DCMS.default <- DCMS(dat.out, cols2, dfp=p.ranks, column.nums.p=1:4)
     #boxplot(dat.out$DCMS.default~dat.out$s_high)
     
-    try(dat.out$DCMS.mcd75 <- DCMS(dat.out, cols2, 
-                          subset = dat.out$IsRobust, dfp=p.ranks))
+    dat.out$DCMS.mcd75 <- DCMS(dat.out, cols2, 
+                          subset = dat.out$IsRobust, dfp=p.ranks)
     #boxplot(dat.out$DCMS.mcd75~dat.out$s_high)
     
-    try(dat.out$CSS <- CSS(dat.out, cols2, two.tailed=FALSE, right.tailed=TRUE)) 
+    dat.out$CSS <- CSS(dat.out, cols2, two.tailed=FALSE, right.tailed=TRUE) 
     
-      minusLogP.ranks <- -log(p.ranks,10)
+    minusLogP.ranks <- -log(p.ranks,10)
     
     names(minusLogP.ranks) <- paste(names(p.ranks), ".minusLogP.rank", sep="")
     str(minusLogP.ranks)
@@ -165,6 +163,134 @@ geterrmessage()
 
 ```
 
+
+```{r}
+### Temporary fix ??
+setwd("/Users/katie/Desktop/MINOTAUReval")
+source("evalsims/getEmpiricalP3_BH.R")
+
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+
+library(qvalue)
+library(rrcovNA)
+library(devtools)
+library(MINOTAUR)
+library(DMwR)
+
+headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"
+outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_pi_TD_H12/"
+#resultsdir <- "~/Desktop/MINOTAUReval/results/"
+filelist <- list.files(headdir)
+length(filelist)
+if (!length(filelist)==25){print("Errr: missing simulation files")}
+
+install_github("NESCent/MINOTAUR", force=TRUE)#, build_vignettes=TRUE)
+library(MINOTAUR)
+
+for (i in c(21:length(filelist))){
+  print(c(i, filelist[i]))
+  infile <- paste(headdir, filelist[i], sep="")
+  dat <- read.csv(infile, header=TRUE)
+  #head(dat)
+  cols <- which(names(dat) %in% c("unstd_iHS", 
+                                  "win51_pi",
+                                  "win51_TajD",
+                                  "win51_H12"))
+    # don't include H: makes cov matrix singular
+  cols
+  dat2 <- dat[complete.cases(dat),]# #don't use complete cases if want to keep all data
+  
+    
+  dat.out <- dat2[,c(1:4,cols)] 
+  sum(duplicated(dat.out))
+  
+  cols2 <- which(names(dat.out) %in% c("unstd_iHS", 
+                                  "win51_pi",
+                                  "win51_TajD",
+                                  "win51_H12"))
+    
+ ### MCD alpha = 0.75
+    S_mcd0.75 <- CovNAMcd(dat.out[,cols2], alpha=0.75)
+    dat.out$IsRobust <- S_mcd0.75@raw.wt==1
+    sum(dat.out$IsRobust)/nrow(dat.out)
+
+    dat.out$Hd.default.raw <- harmonicDist(dat.out, column.nums = cols2)
+    
+    dat.out$Nd.default.raw <- neighborDist(dat.out, column.nums = cols2)
+    
+dat.out$Hd.mcd75.raw <- harmonicDist(dat.out, column.nums = cols2, S = S_mcd0.75@cov, subset = dat.out$IsRobust)
+
+dat.out$Nd.mcd75.raw <- neighborDist(dat.out, column.nums = cols2,  S = S_mcd0.75@cov, subset = dat.out$IsRobust)
+
+write.csv(dat.out, file = paste(outdir,"set1b_", filelist[i], sep=""))
+}    
+```
+
+
+
+```{r}
+### Temporary fix ??
+setwd("/Users/katie/Desktop/MINOTAUReval")
+source("evalsims/getEmpiricalP3_BH.R")
+
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+
+library(qvalue)
+library(rrcovNA)
+library(devtools)
+library(MINOTAUR)
+library(DMwR)
+
+headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"
+outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_pi_TD_H12/"
+#resultsdir <- "~/Desktop/MINOTAUReval/results/"
+filelist <- list.files(headdir)
+length(filelist)
+if (!length(filelist)==25){print("Errr: missing simulation files")}
+
+install_github("NESCent/MINOTAUR", force=TRUE)#, build_vignettes=TRUE)
+library(MINOTAUR)
+
+for (i in c(1:length(filelist))){
+  print(c(i, filelist[i]))
+  infile <- paste(headdir, filelist[i], sep="")
+  dat <- read.csv(infile, header=TRUE)
+  #head(dat)
+  cols <- which(names(dat) %in% c("unstd_iHS", 
+                                  "win51_pi",
+                                  "win51_TajD",
+                                  "win51_H12"))
+    # don't include H: makes cov matrix singular
+  cols
+  dat2 <- dat[complete.cases(dat),]# #don't use complete cases if want to keep all data
+  
+    
+  dat.out <- dat2[,c(1:4,cols)] 
+  sum(duplicated(dat.out))
+  
+  cols2 <- which(names(dat.out) %in% c("unstd_iHS", 
+                                  "win51_pi",
+                                  "win51_TajD",
+                                  "win51_H12"))
+    
+ ### Compare # robust points
+    S_mcd0.51 <- CovNAMcd(dat.out[,cols2], alpha=0.51)
+    dat.out$IsRobust <- S_mcd0.51@raw.wt==1
+    print(sum(dat.out$IsRobust)/nrow(dat.out))
+
+    S_mcd0.51 <- CovNAMcd(dat.out[,cols2], alpha=0.75)
+    dat.out$IsRobust <- S_mcd0.51@raw.wt==1
+    print(sum(dat.out$IsRobust)/nrow(dat.out))
+    
+    S_mcd0.51 <- CovNAMcd(dat.out[,cols2], alpha=0.90)
+    dat.out$IsRobust <- S_mcd0.51@raw.wt==1
+    print(sum(dat.out$IsRobust)/nrow(dat.out))
+}    
+```
  ### Get hclust distance based on raw statistics (and all points)
     ### default Hclust with wardD2
     Hcd <- outliers.ranking(dat.out[,cols2], method = "sizeDiff",

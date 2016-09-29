@@ -1,0 +1,385 @@
+---
+title: "Make dog data plots"
+author: "Katie Lotterhos"
+date: "August 25, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fields)
+#setwd("/Users/katie/Desktop/MINOTAUReval")
+
+df <- read.table("results/dogBreedsPowerB_win50_slopesize20.txt", header=TRUE)
+head(df)
+
+hist(df$steepness)
+summary(df$steepness)
+
+all_stats <- levels(df$statname)
+all_breeds <- levels(df$breed)
+
+all_stats
+
+df <- df[order(df$chr, df$SNP, df$freq),]
+head(df)
+hist(df$steepness)
+```
+
+### Create STEEPNESS dataframe
+```{r}
+  #boxplot(df$steepness~df$statname, las=2)
+  
+  df.steep <- reshape(df[,c(1:5,11)], timevar="statname", 
+                 idvar = c("breed", "chr", "SNP", "freq"),
+                 direction="wide")
+  head(df.steep)
+  names(df.steep)<- gsub("steepness.", "", names(df.steep))
+  
+  df.95 <- df.steep
+  head(df.95)
+  df.95$blank <- NA
+  df.95$name <-paste(df.95$breed, df.95$chr, df.95$SNP, df.95$freq, sep="_")
+  
+  br <- c(-0.6, quantile(df$steepness, seq(0.28, 1, by=0.02)))
+  rbind(br)
+  names(br)
+          #anything less than 0 should be white
+          #30% quantile or index 16
+  col = c("white", two.colors(start="white", end="darkblue", middle="orange",length(br)-2))
+
+```  
+
+### Stat orders for plotting
+
+```{r}
+  stat1 <- match(c("unstd_iHS", "win51_H12",
+                     "win51_pi", "win51_TajD",
+                     "blank",
+                      "Md.rankp.mcd75",
+                     "DCMS.default" ,
+
+                     "Md.default.raw",
+                     #"Hd.default.raw",
+                     #"Nd.default.raw",
+                      "CSS") , names(df.95))
+                      
+                      
+       statorder <- match(c("Md.default.raw",
+                       "Md.mcd75.raw", "blank",
+                       "Hd.default.raw",
+                       "Hd.mcd75.raw", "blank",
+                       "Nd.default.raw",
+                       "Nd.mcd75.raw", "blank",
+                       "DCMS.default",
+                       "DCMS.mcd75") , names(df.95))
+
+```
+       
+#### steepness: heatmap default vs. mcd
+
+```{r}
+toorder <- order(df.95[,"freq"])
+    df.95 <- df.95[toorder, ] 
+
+pdf("results/Dog_heatmap_steepness_compareDefaultMCD.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6))  
+   image(1:length(statorder), 1:nrow(df.95),t(as.matrix(df.95[,statorder])), xlab="", ylab="", axes=FALSE,  main="", col=col, breaks=br)
+    axis(1,1:length(statorder),lab=names(df.95)[statorder], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=col, breaks=br)
+dev.off()
+```
+
+#### Steepness compare univariate multivariate
+
+```{r}
+    toorder <- order(df.95[,"Md.rankp.mcd75"])
+    df.95 <- df.95[toorder, ] 
+    
+    pdf("results/Dog_heatmap_steepness_compare_stats.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6)) 
+      image(1:length(stat1), 1:nrow(df.95),t(as.matrix(df.95[,stat1])), xlab="", ylab="", axes=FALSE,  main="", col=col, breaks=br)
+    
+      axis(1,1:length(stat1),lab=names(df.95)[stat1], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=col, breaks=br)
+  dev.off()    
+```
+
+### Distance from focal SNP: create dataframe
+
+```{r}
+par(mar=c(4,4,1,1))
+hist(df$dist/1000)
+df$dist_KB <- df$dist/1000
+
+df.dist <- reshape(df[,c(1:5,17)], timevar="statname", 
+               idvar = c("breed", "chr", "SNP", "freq"),
+               direction="wide")
+head(df.dist)
+names(df.dist)<- gsub("dist_KB.", "", names(df.dist))
+
+df.95 <- df.dist
+head(df.95)
+df.95$blank <- NA
+df.95$name <-paste(df.95$breed, df.95$chr, df.95$SNP, df.95$freq, sep="_")
+    
+
+summary(df$dist_KB)
+br <- c(0, seq(10, 450, by=10))
+br
+#names(br)
+col = c("darkred", two.colors(start="darkblue", end="white", middle="orange",length(br)-3), "white") 
+```
+
+#### plot heatmap distance
+
+```{r}
+  #par(mar=c(8,4,0.5,0.5))
+  #boxplot(df$dist~df$statname, las=2)
+   
+    toorder <- order(df.95[,"Md.rankp.mcd75"], decreasing = TRUE)
+    df.95 <- df.95[toorder, ] 
+    
+    pdf("results/Dog_heatmap_DIST_compare_stats.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6)) 
+      image(1:length(stat1), 1:nrow(df.95),t(as.matrix(df.95[,stat1])), xlab="", ylab="", axes=FALSE,  main="", col=col, breaks=br)
+    
+      axis(1,1:length(stat1),lab=names(df.95)[stat1], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=col, breaks=br)
+  dev.off()  
+```
+
+### Create dataframe: Minus-log ranked p-values
+
+```{r}
+df$logp <- -log(df$emp_p+min(df$emp_p[df$emp>0]), 10)
+head(df)
+df.emp <- reshape(df[,c(1:5,18)], timevar="statname", 
+               idvar = c("breed", "chr", "SNP", "freq"),
+               direction="wide")
+head(df.emp)
+names(df.emp)<- gsub("logp.", "", names(df.emp))
+
+df.95 <- df.emp
+head(df.95)
+df.95$blank <- NA
+df.95$name <-paste(df.95$breed, df.95$chr, df.95$SNP, df.95$freq, sep="_")
+    
+summary(df$logp)
+quantile(df$logp, seq(0,1,by=0.05))
+  # 1 correpsonds to p=0.1, anything less than that should be colored white
+br <- c(0,1, quantile(df$logp, seq(0.35, 0.9, by=0.01)), max(df$logp))
+col = c("white", two.colors(start="white", end="darkblue", middle="orange",length(br)-3), "darkblue")    
+```
+
+#### Heatmap of log-ranked pvalues
+
+```{r}
+  par(mar=c(8,4,0.5,0.5))
+  #boxplot(df$logp~df$statname, las=2)
+   
+    toorder <- order(df.95[,"Md.rankp.mcd75"])
+    df.95 <- df.95[toorder, ] 
+    
+    pdf("results/Dog_heatmap_LogP_compare_stats.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6)) 
+      image(1:length(stat1), 1:nrow(df.95),t(as.matrix(df.95[,stat1])), xlab="", ylab="", axes=FALSE,  main="", col=col, breaks=br)
+    
+      axis(1,1:length(stat1),lab=names(df.95)[stat1], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=col, breaks = br)
+  dev.off() 
+```  
+  
+### Compare default and MCD for Steepness and -log(rank_P)
+
+```{r}
+pdf("results/Dog_scatterCompareDefaultMCD.pdf", width=6, height=10)
+  summary(df$steepness)
+  xylim=c(-0.06, 0.35)
+  par(mfcol=c(4,2), mar=c(4,4,1,0.5), oma=c(1,1,1,1), pch=19, col=rgb(0,0,0,0.1), cex=1.1)
+
+  plot(df.steep$Md.default.raw, df.steep$Md.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Md default", ylab="Md MCD", bty="l", cex=2)
+  abline(0,1)  
+  mtext("steepness", side=3, col="black")
+  
+  plot(df.steep$Nd.default.raw, df.steep$Nd.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Nd default", ylab="Nd MCD", bty="l", cex=2)
+  abline(0,1)  
+
+  plot(df.steep$Hd.default.raw, df.steep$Hd.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Hd default", ylab="Hd MCD", bty="l", cex=2)
+  abline(0,1) 
+  
+  plot(df.steep$DCMS.default, df.steep$DCMS.mcd75,
+       xlim=xylim, ylim=xylim, xlab="DCMS default", ylab="DCMS MCD", bty="l", cex=2)
+  abline(0,1)
+  
+  ### P-value ###
+  xylim=c(0,5)
+  plot(df.emp$Md.default.raw, df.emp$Md.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Md default", ylab="", bty="l", cex=2)
+  abline(0,1) 
+  mtext("-log(rank P-value)", 3, col="black")
+  
+  plot(df.emp$Nd.default.raw, df.emp$Nd.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Nd default", ylab="", bty="l", cex=2)
+  abline(0,1)  
+
+  plot(df.emp$Hd.default.raw, df.emp$Hd.mcd75.raw,
+       xlim=xylim, ylim=xylim, xlab="Hd default", ylab="", bty="l", cex=2)
+  abline(0,1) 
+  
+  plot(df.emp$DCMS.default, df.emp$DCMS.mcd75,
+       xlim=xylim, ylim=xylim, xlab="DCMS default", ylab="", bty="l", cex=2)
+  abline(0,1)
+dev.off()  
+```
+
+### Scatterplot comparisons
+
+#### Compare steepness and significance among univariate and one multivariate stat
+
+```{r}
+all_stats
+con <- c( "unstd_iHS", "win51_H12", "win51_pi", "win51_TajD", "Md.rankp.mcd75")
+con_name <- c("A) iHS", "B) H12", expression("C) "*pi), "D) Tajima's D", "E) Mahalanobis (rank p-values)")
+summary(df$steepness)
+pdf("results/Dog_ScatterCompareSteepnessAndEmp_UniMulti.pdf", width=4, height=6)
+  par(mfcol=c(5,1), mar=c(2,1,2,1), oma=c(2,3,0,0), col="black")
+  summary(df$steepness)
+  for (i in seq_along(con)){
+    a = df$steepness[df$statname==con[i]]
+    b = df$logp[df$statname==con[i]]
+    if(i==5){
+    plot(a,b, pch=19, col=rgb(0,0,1,0.3), xlim=c(min(df$steepness),max(df$steepness)),
+         ylim=c(0,4.1),  xaxt="n", ylab="", bty="l", cex=1.5)
+    }else{
+      plot(a,b, pch=19, col=rgb(0,0,0,0.3), xlim=c(min(df$steepness),max(df$steepness)),
+         ylim=c(0,4.1),  xaxt="n", ylab="", bty="l", cex=1.5)
+    }
+    mtext(con_name[i],3,line=0, cex=0.8, adj=0)
+    axis(1, at=seq(-0.06,0.36,by=0.06), labels=rep("",8))
+  }
+  axis(1, at=seq(-0.06,0.36,by=0.06))
+  mtext("Steepness", side=1, outer=TRUE)
+  mtext("-Log(rank P-value)", side=2, outer=TRUE, line=1)
+dev.off()
+```
+
+#### Compare steepness and significance among multivariate stats
+
+```{r}
+all_stats
+con <- c("Md.rankp.mcd75", "DCMS.default", "Md.default.raw", "Md.mcd75.raw", "Hd.default.raw", "Hd.mcd75.raw", "Nd.default.raw", "Nd.mcd75.raw", "CSS")
+
+con_name <- c("A) Mahalanobis (rank p-values)", "B) DCMS", "C) Mahalanobis (raw)", "D) Mahalanobis (mcd)", "E) Harmonic mean (raw)", "F) Harmonic mean (mcd)", "G) Neighbor distance (raw)", "H) Neighbor distance (mcd)", "I) CSS")
+
+pdf("results/Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf", width=8, height=6)
+  par(mfrow=c(5,2), mar=c(1,4,2,1), oma=c(3,2,0,0))
+  summary(df$steepness)
+  for (i in seq_along(con)){
+    a = df$steepness[df$statname==con[i]]
+    b = df$logp[df$statname==con[i]]
+    plot(a,b, pch=19, col=rgb(0,0,0,0.3), xlim=c(min(df$steepness),max(df$steepness)),
+         ylim=c(0,4.1),  xaxt="n", ylab="", bty="l")
+    mtext(con_name[i],3,line=0, cex=0.8, adj=0)
+    axis(1, at=seq(-0.06,0.36,by=0.06), labels=rep("",8))
+  }
+  axis(1, at=seq(-0.06,0.36,by=0.06))
+    mtext("Steepness", side=1, outer=TRUE, line=2)
+  mtext("-Log(rank P-value)", side=2, outer=TRUE, line=0)
+dev.off()
+```
+
+#### Compare distance and significance among univariate and one multivariate stat
+
+```{r}
+con <- c( "unstd_iHS", "win51_H12", "win51_pi", "win51_TajD", "Md.rankp.mcd75")
+con_name <- c("A) iHS", "B) H12", expression("C) "*pi), "D) Tajima's D", "E) Mahalanobis (rank p-values)")
+
+pdf("results/Dog_ScatterCompareDistanceAndEmp_UniMulti.pdf", width=4, height=6)
+  par(mfcol=c(5,1), mar=c(1,1,2,1), oma=c(3,4,0,0))
+  for (i in seq_along(con)){
+    a = signif(df$dist_KB[df$statname==con[i]],2)
+    b = round(df$logp[df$statname==con[i]],1)
+    #plot(a,b, pch=19, xlim=c(0, 2000), col=rgb(0,0,0,0.1), ylab="", xlab="", ylim=c(0,4.1), cex=1.2)
+    dat=as.data.frame(cbind(a,b),colnames=c("x","y"))
+    dat
+    newdat=aggregate(dat,by=list(a,b),length)
+    colnames(newdat)=c("x","y","N")
+    newdat
+    if(i==5){
+    symbols(newdat$x,newdat$y,circles=newdat$N*10,inches=FALSE,xlab="",ylab="", bg = rgb(0,0,1,0.2), fg = "grey40",  xlim=c(0,1000), ylim=c(0,7),  xaxt="n",  bty="l")
+    }else{
+      symbols(newdat$x,newdat$y,circles=newdat$N*10,inches=FALSE,xlab="",ylab="", bg = rgb(0,0,0,0.2), fg = "grey40",  xlim=c(0,1000), ylim=c(0,7),  xaxt="n",  bty="l")
+    }
+    mtext(con_name[i],3,line=0, cex=0.8, adj=0)
+    #axis(1, at=seq(0,25,by=5), labels=rep("",6))
+  }
+  axis(1, at=seq(0,1000,by=200))
+  mtext("Distance from focal SNP (Kb)", side=1, outer=TRUE, line=1)
+  mtext("-Log(p)", side=2, outer=TRUE, line=1)
+dev.off()
+```
+
+#### Compare distance and significance among multivariate stats
+```{r}
+all_stats
+con <- c("Md.rankp.mcd75", "DCMS.default", "Md.default.raw", "Md.mcd75.raw", "Hd.default.raw", "Hd.mcd75.raw", "Nd.default.raw", "Nd.mcd75.raw", "CSS")
+con_name <- c("A) Mahalanobis (rank p-values)", "B) DCMS", "C) Mahalanobis (raw)", "D) Mahalanobis (mcd)", "E) Harmonic mean (raw)", "F) Harmonic mean (mcd)", "G) Neighbor distance (raw)", "H) Neighbor distance (mcd)", "I) CSS")
+
+pdf("results/Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf", width=8, height=6)
+  par(mfrow=c(5,2), mar=c(1,1,2,1), oma=c(2,3,0,0))
+  for (i in seq_along(con)){
+    a = signif(df$dist_KB[df$statname==con[i]],2)
+    b = round(df$logp[df$statname==con[i]],1)
+    dat=as.data.frame(cbind(a,b),colnames=c("x","y"))
+    dat
+    newdat=aggregate(dat,by=list(a,b),length)
+    colnames(newdat)=c("x","y","N")
+    newdat
+    symbols(newdat$x,newdat$y,circles=newdat$N*10,inches=FALSE,xlab="",ylab="", bg = rgb(0,0,0,0.2), fg = "grey40",  xlim=c(0,1000), ylim=c(0,7),  xaxt="n",  bty="l")
+    mtext(con_name[i],3,line=0, cex=0.8, adj=0)
+    axis(1, at=seq(0,1000,by=200), labels=rep("",6))
+  }
+  axis(1, at=seq(0,1000,by=200))
+  mtext("Distance from focal SNP", side=1, outer=TRUE, line=1)
+  mtext("-Log(p)", side=2, outer=TRUE, line=1)
+dev.off()
+```
+
+#### Compare variance and significance among univariate and one multivariate stat
+```{r}
+hist(sqrt(df$var_10window))
+
+
+all_stats
+con <- c("Md.rankp.mcd75", "DCMS.default", "Md.default.raw", "Md.mcd75.raw", "Hd.default.raw", "Hd.mcd75.raw", "Nd.default.raw", "Nd.mcd75.raw", "CSS")
+con_name <- c("A) Mahalanobis (rank p-values)", "B) DCMS", "C) Mahalanobis (raw)", "D) Mahalanobis (mcd)", "E) Harmonic mean (raw)", "F) Harmonic mean (mcd)", "G) Neighbor distance (raw)", "H) Neighbor distance (mcd)", "I) CSS")
+
+summary( sqrt(df$var[df$statname==con[i]]))
+
+pdf("results/Dog_ScatterCompareVarAndEmp_AllMulti.pdf", width=8, height=6)
+  par(mfrow=c(5,2), mar=c(1,1,2,1), oma=c(2,3,0,0))
+  for (i in seq_along(con)){
+    a = sqrt(df$var[df$statname==con[i]])
+    b = df$logp[df$statname==con[i]]
+    plot(a,b, pch=19, col=rgb(0,0,0,0.3), xlim=c(0,2.3),
+         ylim=c(0,4.1),  ylab="", bty="l")
+    mtext(con_name[i],3,line=0, cex=0.8, adj=0)
+  }
+  mtext("Standard deviation around focal SNP", side=1, outer=TRUE, line=1)
+  mtext("-Log(p)", side=2, outer=TRUE, line=1)
+dev.off()
+
+d2 <- df[grep("Nd", df$statname),]
+head(d2)
+d2$statname<-factor(d2$statname)
+levels(d2$statname)
+boxplot(d2$var_10window~d2$statname, ylab="Standard deviation in signal at 10 SNPs around focal SNP")
+```

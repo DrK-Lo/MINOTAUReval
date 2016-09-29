@@ -1,0 +1,242 @@
+---
+title: "Dog data- calc power"
+author: "Katie Lotterhos"
+date: "May 24, 2016"
+output: html_document
+---
+
+### Load packages and data
+```{r setup, include=FALSE}
+
+#setwd("/Users/katie/Desktop/MINOTAUReval")
+source("evalsims/getEmpiricalP3_BH.R")
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+if(!("qvalue" %in% installed.packages())){
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("qvalue")
+  }
+
+library(qvalue)
+library(rrcovNA)
+library(devtools)
+#source("http://bioconductor.org/biocLite.R")
+#biocLite("qvalue")
+#library("qvalue")
+#install_github("whitlock/OutFLANK")
+#install_github("NESCent/MINOTAUR")#, ref="develop")#, build_vignettes=TRUE)
+#library(MINOTAUR)
+library(plyr)
+
+headdir <- "~/Desktop/MINOTAUReval/data/dog_full/"
+outdir <- "~/Desktop/MINOTAUReval/data/dog_full_multvar_iHS_pi_TD_H12/"
+#resultsdir <- "~/Desktop/MINOTAUReval/results/"
+filelist <- list.files(outdir, pattern = "set1_")
+filelist2 <- list.files(outdir, pattern = "set1b_")
+filelist
+length(filelist)
+length(filelist2)
+if (!length(filelist)==25){print("Errr: missing simulation files")}
+if (!length(filelist2)==25){print("Errr: missing simulation files")}
+
+genelist <- read.csv("data/dog_QTL_genes.csv")
+  # the column names in this file match the ones in the filelist
+head(genelist)
+col_match <- sub(".csv", "", sub("set1_full_","", filelist))
+col_match %in% names(genelist)
+  # should be all trues
+```
+
+### Loop through each dataset
+The following chunk of code does for each dataset:
+1) calculate multivariate distances based on default covariance matrix
+2) compares covariance matrix estimated from just neutral loci to covariance matrix on all data and MCD estimate of covariance
+3) calculate multivariate distances based on MCD covariance matrix
+4) Make plots of signals
+
+I got frustrated with flex_manhattan2.  First, it doesn't plot SNPs according to their genomic position; it plots them according to index.
+
+```{r loop}
+for (i in 1:length(filelist)){
+  print("-----------------------------------")
+  print("-----------------------------------")
+  print("-----------------------------------")
+  print(c(i, filelist[i]))
+  infile <- paste(outdir, filelist[i], sep="")
+  data <- read.csv(infile, header=TRUE)
+  datb <- read.csv(paste(outdir, filelist2[i], sep=""))
+  identical(data$rs, datb$rs)
+  dim(datb)
+  dat <- cbind(data, datb[,13:14])
+  dim(dat)
+  head(dat)
+  dat <- dat[order(dat$chr, dat$bp),]
+  
+  (focal_snps <- genelist[,c("chr","start","end", "SNP", col_match[i])])
+  (sel_snps <- focal_snps[focal_snps[,5]>0.5,c("chr","SNP", col_match[i])])
+  #(sel_region <- focal_snps[focal_snps[,5]>0.5,c("chr","start", "end")])
+  names(sel_snps)[3] <- "freq"
+  print(sel_snps)
+  #print(sel_region)
+
+  # change chromosome to a number for analysis
+   chr <- levels(factor(dat$chr))
+   dat$loc <- as.factor(dat$chr)
+   dat$loc <- mapvalues(dat$loc, from= chr, to= 1:length(chr))
+   tail(dat$loc)
+
+  #############################
+  ### Function to determine power to detect known loci
+get_slope <- function(column, upper=TRUE, winsize=50, slopesize=20){
+    # winsize is for finding the maximum
+    # slopesize is # SNPs on one side for calc slope
+    winsizehalf <- winsize/2
+    # upper=TRUE tests for outliers in the upper 95%
+    # upper=FALSE tests for outliers lower 5% of the test statistic
+    # 25 SNPs tested on either side of SNP
+
+      ### Loop through each focal SNP and calculate power in a window around it
+      dist <- i2_slope_downstream <- i2_slope_upstream <- steepness <- value <- emp_p <- dist_SNP <- var_10window <- c()
+      statname <- names(dat)[column]
+      print(statname)
+      for (k in 1:nrow(sel_snps)){
+        maintext <- paste(col_match[i],sel_snps$chr[k],"\n", sel_snps$SNP[k])
+      print(maintext)
+      
+        dat2 <- dat[which(dat$chr == sel_snps$chr[k]),]
+          #get Chr data
+        row <- which(dat2$bp >= sel_snps$SNP[k])[1]
+       
+        ### The window is on either side
+        cond = (row-winsizehalf):(row+winsizehalf)
+        variable1 <- dat2[,column]
+        variable1 <- variable1[!(is.infinite(variable1))]
+        if (length(grep("Hd", statname))>0){
+          variable1[variable1==0]=NA
+          # a few loci have 0 Hd, this biases the slope
+        }
+        
+        variable <- (variable1-mean(variable1, na.rm=TRUE))/sd(variable1, na.rm=TRUE)
+        
+        ### Get the variable of interest
+        if(upper){
+          i1 <- which(variable[cond]==max(variable[cond], na.rm=TRUE))
+        }else{
+          i1 <- which(variable[cond]==min(variable[cond], na.rm=TRUE))
+        }
+        
+        bob <-  abs(row-cond[i1])
+        bob2 <- which(bob == min(bob))[1] #in some cases the 2 snps are of equal distance, chose the first one
+        
+        i2 <- cond[i1][bob2]
+        dist_SNP[k] <- abs(row-i2)
+        dist[k] <- abs(dat2$bp[row]-dat2$bp[i2])
+        
+        ## Downstream slope
+        down <- i2:(i2+slopesize)
+        down_lm <- lm(variable[down]~down)
+        down_lm_slope_p <- summary(down_lm)$coef[2,4]
+        if(down_lm_slope_p<0.01){
+          i2_slope_downstream[k] <- down_lm$coef[2]
+        }else{
+          i2_slope_downstream[k] <- 0
+        }
+        
+        ## Upstream slope
+        up <- (i2-slopesize):(i2)
+        up_lm <- lm(variable[up]~up)
+        up_lm_slope_p <- summary(up_lm)$coef[2,4]
+        if(up_lm_slope_p<0.01){
+          i2_slope_upstream[k] <- up_lm$coef[2]
+        }else{
+          i2_slope_upstream[k] <- 0
+        }
+        
+        ## Variance in signal around max SNP
+        var_10window[k] <- var(variable[(i2-5):(i2+5)], na.rm = TRUE)
+          
+      
+      if((row-200)<1){plotmin=1}else{plotmin=row-200}
+      if((row+200)>length(variable)){plotmax=length(variable)}else{plotmax=row+200}
+      
+      plot(plotmin:plotmax, variable[plotmin:plotmax], pch=19, ylab=statname,
+           main=maintext, xlab="", col=rgb(0,0,0,0.5), ylim=c(-4,4.5))
+      
+      lines(c(row,row), c(-1000,1000))
+      lines(c(row-winsizehalf,row-winsizehalf), c(-1000,1000), lty=2)
+      lines(c(row+winsizehalf,row+winsizehalf), c(-1000,1000), lty=2)
+      lines(c(i2,i2), c(-1000,1000), col="blue")
+      
+      if(up_lm_slope_p<0.01){
+        abline(up_lm, col="blue")
+      }
+      if(down_lm_slope_p<0.01){
+        abline(down_lm,0, col="blue", lty=2)
+      }
+      
+      if(upper){quant<- quantile(variable,probs = 0.95, na.rm=TRUE)}else{
+        quant<- quantile(variable,probs = 0.05, na.rm = TRUE)
+      }
+      
+      abline(quant,0, col="grey")
+      
+      if(upper){
+        steepness[k] <- (i2_slope_upstream[k]+(i2_slope_downstream[k]*-1))/2
+      }else{
+        steepness[k] <- ((i2_slope_upstream[k]*-1)+i2_slope_downstream[k])/2
+      }
+      
+      value[k] <-variable[i2] 
+      p <- rank(variable)[i2]/length(variable)
+      if(upper){
+        emp_p[k] <- 1-p
+      }else{
+        emp_p[k] <- p
+      }
+      
+      print(data.frame(i2_slope_upstream[k], i2_slope_downstream[k], steepness[k], value[k], emp_p[k], dist[k], dist_SNP[k], var_10window[k]))
+      
+      }# end loop though focal SNPs
+      
+    out=data.frame(breed=col_match[i], statname, sel_snps, i2_slope_upstream, i2_slope_downstream, winsize, slopesize, upper, steepness, value, emp_p, dist, dist_SNP, var_10window)
+    return(out)
+    }### end function
+  
+  #get_slope(6)  
+
+  ### Get power for upper tail
+  whichcols <- which(names(dat) %in% c("unstd_iHS", "win51_H12", 
+                 "Md.default.raw","Hd.default.raw", 
+                 "Nd.default.raw", "Md.mcd75.raw",
+                  "Nd.mcd75.raw", "Hd.mcd75.raw",
+                 "DCMS.default", "DCMS.mcd75", 
+                 "CSS", "Md.rankp.mcd75")
+  )
+  names(dat)[whichcols]
+  
+  a<- lapply(whichcols, get_slope, winsize=50, slopesize=20)
+  head(a)
+  
+  whichcolsMin <- which(names(dat) %in% c("win51_TajD", "win51_pi"))
+  b<-lapply(whichcolsMin, get_slope, upper=FALSE,  winsize=50, slopesize=20)
+  head(b)
+
+  final <- c(a,b)
+
+  for (j in 1:length(final)){
+    tab <- data.frame(final[[j]])
+    if(i==1 & j==1){
+    write.table(tab, file="results/dogBreedsPowerB.txt", append=FALSE, row.names=FALSE, col.names=TRUE)
+    }else{
+    write.table(tab, file="results/dogBreedsPowerB.txt", append=TRUE, row.names=FALSE, col.names=FALSE)
+    }
+  }#end loops through j
+} #end loop through filelist
+
+```
+
+### Session info
+```{r}
+sessionInfo()
+```

@@ -1,0 +1,133 @@
+---
+title: "Make dog data plots"
+author: "Katie Lotterhos"
+date: "August 25, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fields)
+#setwd("/Users/katie/Desktop/MINOTAUReval")
+
+df <- read.table("results/dogBreedsPowerB_win21.txt", header=TRUE)
+head(df)
+
+all_stats <- levels(df$statname)
+all_breeds <- levels(df$breed)
+
+all_stats
+
+df <- df[order(df$chr, df$SNP, df$freq),]
+head(df)
+
+df.95 <- reshape(df[,1:6], timevar="statname", 
+               idvar = c("breed", "chr", "SNP", "freq"),
+               direction="wide")
+head(df.95)
+
+df.90 <- reshape(df[,c(1:5,7)], timevar="statname", 
+               idvar = c("breed", "chr", "SNP", "freq"),
+               direction="wide")
+head(df.90)
+identical(df.95[,9], df.90[,9])
+
+df.95$blank <- df.90$blank <-NA
+df.95$name <- df.90$name <-paste(df.95$breed, df.95$chr, df.95$SNP, df.95$freq, sep="_")
+names(df.95)
+names(df.95)<- gsub("CI_out.95.", "", names(df.95))
+names(df.90)<- gsub("CI_out.90.", "", names(df.90))
+
+
+### Compare default and MCD ####
+  statorder <- match(c("Md.default.raw",
+                       "Md.mcd75.raw", "blank",
+                       "Hd.default.raw",
+                       "Hd.mcd75.raw", "blank",
+                       "Nd.default.raw",
+                       "Nd.mcd75.raw", "blank",
+                       "DCMS.default",
+                       "DCMS.mcd75") , names(df.95))
+
+  ### Make barplot
+  par(mar=c(8,6,1,1))
+  color1 <- c("lightblue", "magenta","red")
+  barplot(apply(df.95[,statorder]>0, MARGIN = 2, mean, na.rm=TRUE), 
+            las=2, ylim=c(0,1), col=color1, ylab="Power (1 SNP > 95% CI\nin 21 bp window)")
+  
+  br <- -0.5:20.5
+  colvect <- c("white", rep("grey", 5), rep("darkblue",15))
+
+pdf("results/Dog_95CI_heatmap_21_compareDefaultMCD.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6))  
+   image(1:length(statorder), 1:nrow(df.95),t(as.matrix(df.95[,statorder])), col=colvect, xlab="", ylab="", axes=FALSE, breaks=br, main="95% CI")
+    axis(1,1:length(statorder),lab=names(df.95)[statorder], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=colvect, breaks=br)
+dev.off()
+
+### Compare all stats
+    stat1 <- match(c("unstd_iHS", "win51_H12",
+                     "win51_pi", "win51_TajD",
+                     "DCMS.default" ,
+                     "Md.default.raw",
+                     "Hd.default.raw",
+                     "Nd.default.raw",
+                      "CSS") , names(df.95))
+    
+    color1 <- c(rep("grey", 4), rep("lightblue", length(stat1-4)))
+    # I think these barplots are kind of meaningless - the Nd is a lot of spurious signals
+    pdf("results/DogPowerBarplot.pdf", width=6, height=5)
+    par(mar=c(10,4,1,1))
+    barplot(apply(df.95[,stat1]>0, MARGIN = 2, mean, na.rm=TRUE), 
+            las=2, ylim=c(0,1), col=color1, main="95% CI at least 1 outlier in 21 bp window")
+    
+    barplot(apply(df.90[,stat1]>0, MARGIN = 2, mean, na.rm=TRUE), 
+            las=2, ylim=c(0,1), col=color1, main="90% CI at least 1 outlier in 21 bp window")
+    
+    barplot(apply(df.95[,stat1]>2, MARGIN = 2, mean, na.rm=TRUE), 
+            las=2, ylim=c(0,1), col=color1, main="95% CI at least 3 outliers in 21 bp window")
+    
+    barplot(apply(df.90[,stat1]>2, MARGIN = 2, mean, na.rm=TRUE), 
+            las=2, ylim=c(0,1), col=color1, main="90% CI at least 3 outliers in 21 bp window")
+    dev.off()
+
+#####
+statorder <- match(c("unstd_iHS", "win51_H12",
+                     "win51_pi", "win51_TajD", "blank",
+                     "DCMS.mcd75" ,
+                     "Md.mcd75.raw",  "CSS") , names(df.95))
+toorder <- order(df.95[,"DCMS.mcd75"])
+#toorder <- order(df.95$freq)
+df.95 <- df.95[toorder, ] 
+
+
+#colvect <- two.colors(20, start="white",middle="grey", end="darkblue")
+
+names(df.95)[statorder]
+
+##### 95 CI HEATMAP #########
+
+pdf("results/Dog_95CI_heatmap_21.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6))
+  image(1:length(statorder), 1:nrow(df.95),t(as.matrix(df.95[,statorder])), col=colvect, xlab="", ylab="", axes=FALSE, breaks=br, main="95% CI")
+    axis(1,1:length(statorder),lab=names(df.95)[statorder], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+    image.plot(t(as.matrix(df.95[,statorder])),legend.only = TRUE, col=colvect, breaks=br)
+dev.off()
+
+#image.plot(1:length(statorder), 1:nrow(df.95),t(as.matrix(df.95[,statorder]))>9, col=colvect, xlab="", ylab="", axes=FALSE)
+
+##### 90 CI HEATMAP #########
+toorder <- order(df.90[,"DCMS.mcd75"])
+df.90 <- df.90[toorder,]
+
+pdf("results/Dog_90CI_heatmap_21.pdf", width=8, height=12)
+  par(mar=c(8,12,1,6))
+  image(1:length(statorder), 1:nrow(df.90),t(as.matrix(df.90[,statorder])), col=colvect, xlab="", ylab="", axes=FALSE, main="90% CI")
+    axis(1,1:length(statorder),lab=names(df.95)[statorder], las=2, cex.axis=1)
+    axis(2,1:nrow(df.95),lab=df.95$name, las=2, cex.axis=0.5)#0.5)
+  image.plot(t(as.matrix(df.90[,statorder])),legend.only = TRUE, col=colvect, breaks=br)
+dev.off()
+  
+```

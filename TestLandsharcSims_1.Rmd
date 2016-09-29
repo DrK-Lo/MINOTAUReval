@@ -216,7 +216,9 @@ DCMS now takes a dfp data frame along with dfv, which could be output from stat_
     ### MCD alpha = 0.75
     S_mcd0.75 <- CovNAMcd(dat.out[,cols2], alpha=0.75)
     dat.out$IsRobust <- S_mcd0.75@raw.wt==1
+    sum(dat.out$IsRobust)/nrow(dat.out)
     
+        
 ### Get multivariate distance stats based on 
 ### raw statistics and all points
     dat.out$Md.default.raw <- Mahalanobis(dat.out, column.nums = cols2)

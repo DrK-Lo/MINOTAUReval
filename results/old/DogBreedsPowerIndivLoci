@@ -1,0 +1,4 @@
+"breed" "statname" "chr" "SNP" "CI_out.95" "CI_out.90"
+"4" "border_collie" "win51_TajD" 4 67040898 0 0
+"7" "border_collie" "win51_TajD" 10 8037693 16 23
+"11" "border_collie" "win51_TajD" 32 4509367 14 23

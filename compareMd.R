@@ -1,3 +1,8 @@
+
+if(!("devtools" %in% installed.packages())){install.packages("devtools", dependencies=TRUE)}
+if(!("rrcovNA" %in% installed.packages())){install.packages("rrcovNA")}
+library(devtools)
+install_github("NESCent/MINOTAUR", ref="develop")#, build_vignettes=TRUE)
 library(MINOTAUR)
 ### Create variables
 x <- rnorm(1000)
@@ -46,37 +51,45 @@ plot(x, log.xp)
 
 hist(log.xp) #values of 0 are less significant
 
-### Hack Mahalanobis for distance from 0
+### Mahalanobis rank-P
 length(x)
 (S <- cov(data.frame(log.xp, log.yp))) #modified since I sent to Bob
-M1.logp2<-Mahalanobis(data.frame(c(log.xp,0,0),c(log.yp,0,0)), S = S, subset=1001:1002)
-M1.logp2<-M1.logp2[-c(1001:1002)]
+M1.logp2<-Mahalanobis(data.frame(c(log.xp),c(log.yp)), S = S, M=c(0,0))
 
 hist(M1.logp2)
 col.vect <- rep("black", length(x))
-(M1.cutoff <- quantile(M1.logp2,probs = 0.9))
-col.vect[M1.logp2>M1.cutoff] <- "red"
-plot(y, M1.logp2, col=col.vect, pch=19, cex=0.3)
-plot(x, M1.logp2, col=col.vect, pch=19, cex=0.3)
+pch.vect <- rep(19, length(x))
+(M1.cutoff <- quantile(M1.logp2,probs = 0.95))
+col.vect[M1.logp2>M1.cutoff] <- "blue"
+pch.vect[M1.logp2>M1.cutoff] <- 4
+plot(y, M1.logp2, col=col.vect, pch=pch.vect, cex=0.3)
+plot(x, M1.logp2, col=col.vect, pch=pch.vect, cex=0.3)
+
 plot(x,y, col=col.vect, pch=19, cex=0.3) # compare to DCMS
 
 ### Compare to DCMS 
-DCMS <- DCMS(data.frame(x.p,y.p))
+DCMS <- DCMS(dfp=data.frame(x.p,y.p), dfv=data.frame(x,y))
 hist(DCMS)
 (D.cutoff <- quantile(DCMS,probs = 0.95))
+pch.vect2 <- rep(19, length(x))
 col.vect2 <- rep("black", length(x))
-col.vect2[DCMS>D.cutoff] <- "red"
-plot(x, DCMS, col=col.vect2, pch=19, cex=0.3)
-plot(y, DCMS, col=col.vect2, pch=19, cex=0.3)
-plot(x, y, col=col.vect2, pch=19, cex=0.3) # compare to MD
+col.vect2[DCMS>D.cutoff] <- "blue"
+pch.vect2[DCMS>D.cutoff] <- 4
+plot(x, DCMS, col=col.vect2, pch=pch.vect, cex=0.3)
+plot(y, DCMS, col=col.vect2, pch=pch.vect, cex=0.3)
+plot(x, y, col=col.vect2, pch=pch.vect, cex=0.3) # compare to MD
 
 ### I'm interested in the difference between the Md and the DCMS plots.
 plot(x,y, col=col.vect, pch=19, cex=0.3) # Md
 plot(x, y, col=col.vect2, pch=19, cex=0.3) # DCMS
 
-plot(log.xp, log.yp, col=col.vect, pch=19, cex=0.3) # Md
-plot(log.xp, log.yp, col=col.vect2, pch=19, cex=0.3) # DCMS
-
+pdf("results/CompareMdRankPandDCMS.pdf", width=6, height=3)
+par(mfrow=c(1,2), bty="l", mar=c(4,4,2,0.5))
+  plot(log.xp, log.yp, col=col.vect, pch=pch.vect, cex=0.3, 
+       xlab="-Log(p) x", ylab="-Log(p) y", main = "Md-rank-P") # Md
+  plot(log.xp, log.yp, col=col.vect2, pch=pch.vect2, cex=0.3, 
+       xlab="-Log(p) x", ylab="-Log(p) y", main = "DCMS") # DCMS
+dev.off()
 ### By Md, there are more outliers along the outside of the distribution
 ### Also by Md, there are more outliers along the x variable than the y variable
 ### when the variance is higher in y than in x. It is important to standardize each variable

@@ -1,0 +1,200 @@
+---
+title: "Make dog data plots"
+author: "Katie Lotterhos"
+date: "August 25, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#setwd("/Users/katie/Desktop/MINOTAUReval")
+
+df <- read.table("results/dogBreedsPower.txt", header=TRUE)
+head(df)
+
+all_stats <- levels(df$stat)
+all_breeds <- levels(df$breed)
+
+all_stats
+```
+
+```{r compare cutoffs}
+
+MakePowerHeatmap <- function(pow_var, maintext, nsnps, stats4plot){
+  powermat <- matrix(NA, ncol=length(all_stats), nrow=length(all_breeds))
+  colnames(powermat) = df$stat[1:length(all_stats)]
+  rownames(powermat) = all_breeds
+  head(powermat)
+  
+  for (i in seq_along(all_breeds)){ # rows
+    for (j in seq_along(all_stats)){   # columns
+      powermat[i,] <- pow_var[df$breed==all_breeds[i] & df$nsnps==nsnps]
+   } 
+  }  
+  powermat
+  
+  powmat2 <- powermat[,which(colnames(powermat) %in% stats4plot)]
+  head(powmat2)
+  
+  powmat2 <- powmat2[,match(stats4plot, colnames(powmat2))] # reorganize to be in order of stats4plot
+  powmat2 <- cbind(powmat2[,1:4], br=NA, powmat2[,5:ncol(powmat2)])
+  powmat2
+  library(fields)
+  
+  par(oma=c(0,0,0,0), mar=c(8,8,2,6))
+  colvect <- two.colors(50, start="white",middle="grey", end="darkblue")
+  image(1:ncol(powmat2), 1:nrow(powmat2), t(powmat2), col = colvect ,axes= FALSE,
+        xlab="", ylab="", main= maintext, cex.main=0.8)
+  ##### add axis
+  axis(1,1:ncol(powmat2),lab=colnames(powmat2), las=2, cex.axis=1)
+  axis(2,1:nrow(powmat2),lab=rownames(powmat2), las=2, cex.axis=0.6)#0.5)
+  box()
+  par(mar=c(8,8,0.5,0))
+  image.plot(t(powmat2), col = colvect, legend.only = TRUE, legend.lab = "Power", legend.shrink = 0.5)
+}#end function
+
+pdf("results/DogEmpiricalPower.pdf", width=6, height=8)
+# least stringent
+
+stats4plot1 <- c("unstd_iHS", "win51_H12", "win51_pi", "win51_TajD", "Md.mcd75.raw",  "DCMS.mcd75")
+  
+  MakePowerHeatmap(df$power.robust75, "(at least 1 SNP) > (overall most robust point)\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.robust75, "(at least 5 SNPs) > (overall most point)\n 50 SNP window", nsnps=5, stats4plot1)
+    
+    #more stringent
+  MakePowerHeatmap(df$power.CI.90, "(at least 1 SNP) > 90% CI\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 90% CI\n 50 SNP window", nsnps=5, stats4plot1)
+  
+  ### Most stringent
+  MakePowerHeatmap(df$power.CI.95, "(at least 1 SNP) > 95% CI\n 50 SNP window", nsnps=1, stats4plot1)
+  MakePowerHeatmap(df$power.CI.95, "(at least 5 SNPs) > 95% CI\n 50 SNP window", nsnps=5, stats4plot1)
+
+
+ stats4plot2 <- c( "CSS", "Hd.mcd75.raw", "Nd.mcd75.raw")
+dev.off()
+```  
+
+
+```{r boxplots of cutoffs}
+
+all_stats <- levels(df$stat)
+for (i in seq_along(all_stats)){  
+  st <- all_stats[i]
+  d2 <- df[df$stat==st,]
+  l <- reshape(d2, 
+               varying = c("cutoff.CI.95", "cutoff.CI.90", "cutoff.robust75"),
+               v.names="cutoff",
+               timevar="type",
+               times= c("cutoff.CI.95", "cutoff.CI.90", "cutoff.robust75"),
+               direction="long")
+  head(l)
+  par(mar=c(8,4,2,1))
+  boxplot(l$cutoff~l$type, ylab="Cutoff", las=2, names=c("95% CI","99% CI","Max robust point"), main=st)
+}#end loop
+```
+
+Next, compare power.
+```{r compare power}
+### First relevel the stats for plotting in right order
+levels(df$stat)
+str(df$stat)
+df$stat <- factor(df$stat, levels=c("unstd_iHS", "win51_H12",
+                                    "win51_pi", "win51_TajD",
+                                    "Md.default.raw", "Hd.default.raw",
+                                    "Nd.default.raw", "DCMS.default",
+                                    "Md.mcd75.raw", 
+                                    "Hd.mcd75.raw",
+                                    "Nd.mcd75.raw",
+                                    "DCMS.mcd75", "CSS"))
+levels(df$stat)
+
+### Plot univariate stats in grey, default in light blue, and MCD in magenta
+
+### First compare power univariate, default, and MCD alpha=0.75, using robust points as a cutoff
+
+d3 <- df[df$stat %in% stats4plot1,]
+dim(d3)
+d3$stat <- factor(d3$stat)
+names(d3)
+
+pdf("results/DogPower_alpha0.75.pdf", width=6, height=4)
+  par(mar=c(8,4,2,1))
+  boxplot(d3$power.robust75[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="Max Robust Point 0.75, nsnps=1")
+    boxplot(d3$power.robust75[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="Max Robust Point 0.75, nsnps=5")
+  
+    boxplot(d3$power.CI.90[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="90% CI, nsnps=1")
+    boxplot(d3$power.CI.90[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="90% CI, nsnps=5")
+
+    boxplot(d3$power.CI.95[d3$nsnps==1]~d3$stat[d3$nsnps==1], las=2, main="95% CI, nsnps=1")
+    boxplot(d3$power.CI.95[d3$nsnps==5]~d3$stat[d3$nsnps==5], las=2, main="95% CI, nsnps=5")
+
+dev.off()
+
+### Next compare power univariate, default, and MCD alpha=0.99, using robust points as a cutoff
+
+d4 <- df[df$stat %in% c("unstd_iHS", "win51_H12",
+                                    "win51_pi", "win51_TajD",
+                        "Md.default", "Hd.default",
+                                    "Kd.default","Nd.default",
+                                    "Md.mcd.subset.99", 
+                                    "Hd.mcd.subset.99",
+                                    "Kd.mcd.subset.99",
+                                    "Nd.mcd.subset.99"),]
+
+
+dim(d4)
+d4$stat <- factor(d4$stat)
+par(mar=c(4,4,1,1))
+pdf("results/DogPower_alpha0.99.pdf", width=8, height=4)
+  par(mar=c(4,4,1,1))
+  boxplot(d4$power.robust99~d4$stat, las=1,adj=0.5,
+          col=c(rep("grey",4), rep("lightblue", 4),
+                rep("magenta", 4)),
+          ylab=expression(paste("Power using robust points as null ", alpha," = 0.99")),
+          names=c("iHS", "H12", expression(pi), 
+                  "Taj. D",
+          rep(c("Md", "Hd", "Kd", "Nd"), 2)))
+dev.off()
+
+```
+
+```{r}
+### Compare power for individual breeds
+all_breeds <- levels(d3$breed)
+for (i in seq_along(all_breeds)){
+  print(all_breeds[i])
+  cond <- which(d3$breed==all_breeds[i])
+  d5 <- d3[cond,]
+  (d5 <- d5[order(d5$stat),])
+  par(mar=c(4,4,4,1))
+  barplot(d5$power.robust75, las=1,
+          main=all_breeds[i], ylim=c(0,1),
+          col=c(rep("grey",4), rep("lightblue", 4),
+                rep("magenta", 4)),
+          ylab=expression(paste(
+            "Power using robust points as null ", 
+            alpha," = 0.75")),
+          names=c("iHS", "H12", expression(pi), 
+                  "Taj. D",
+          rep(c("Md", "Hd", "Kd", "Nd"), 2)))
+}
+```
+
+Next, compare multivariate location and scatter. Do using the robust points change the estimates for multivariate? mean and covariance?
+```{r}
+covdf <- read.csv("data/dog_full_multvar_iHS_pi_TD_H12/covsummary.csv")
+head(covdf)
+library(vioplot)
+pdf("results/DogDataCompareLocationScatter.pdf", width=5, height=7)
+par(mar=c(4,6,0,0), mfrow=c(2,1))
+vioplot(covdf$Sall_Smcd0.75_cov, 
+        covdf$Sall_Smcd0.99_cov, col="grey",
+        names=c("MCD 0.75", "MCD 0.99"))
+title(ylab="Mean difference with covariance\nmatrix calculated using all loci")
+
+vioplot(covdf$Sall_Smcd0.75_mean, 
+        covdf$Sall_Smcd0.99_mean, col="grey",
+        names=c("MCD 0.75", "MCD 0.99"))
+title(ylab="Mean difference with multivariate \nlocation calculated using all loci")
+dev.off()
+```

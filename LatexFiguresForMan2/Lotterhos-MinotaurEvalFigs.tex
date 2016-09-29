@@ -40,51 +40,32 @@
 %\renewcommand\thesection{S1}
 %\listoffigures
 
+
+\newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=6in]{../figures_man2/F1-FourMeasures.pdf}
+\includegraphics[height=6in]{../figures_man2/F1-LandsharcComparetoNeutlocationscatter.pdf}
 \end{center}
-\caption[]{Conceptual examples of the four multivariate statistics compared in this study. 
-
-{\bf TO DO: Add ABCD.
-
-TEAM: Would anyone like to take on making a figure like this one, but better for publication? I made these in power point, which is why they are awful. I think the kernel deviance could be challenging to visualize, because technically the bandwidth should be proportional to the variance in each dimension. The harmonic mean could also be challenging, because that is a lot of overlapping lines to draw. It might be good to draw the lines first with transparency=0.1 and lay the points on top.}} 
+\caption[]{ Mean difference between the estimate of location and scatter with the true neutral estimate. "All" refers to all the data (including selected loci), and MCD refers to the minimum covariance determinant estimate with the proportion of data used to create the subsets. Boxplots are summarized over all demographies and sampling designs.
+} 
  \label{fig:???}
 \end{figure}
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=6in]{../figures_man2/F2-LandsharcSummary.pdf}
+\includegraphics[width=3in]{../figures_man2/F2-VizCovariance.pdf}
 \end{center}
-\caption[]{Comparison of univariate and multivariate statistics for their power to separate signals of selection from neutrality. Each row represents one of the simulated demographies (IM = Island Model, IBD = Isolation By Distance, 1R = range expansion from one refuge, 2R = range expansion from two refugia). The four univariate statistics (grey box plots) evaluated were: $X^TX$ (xtx), Bayes Factors (bf), Spearman's $\rho$, and  $Z$-scores (lfmm).} 
+\caption[]{Comparison of 95\% confidence intervals on the two dimensional ellipse given by the determinant on the covariance matrix between these two variables calculated from: (i) all the data, (ii) neutral loci only, and (iii) the MCD estimate.}
  \label{fig:???}
 \end{figure}
-
 
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=6in]{../figures_man2/F3-CovEllipse_4NeutralMCDpoints.png}
+\includegraphics[width=3in]{../figures_man2/F3-LandsharcComparePowerMCDminusPowerDefault.pdf}
 \end{center}
-\caption[]{Comparison of 99\% confidence intervals on the two dimensional ellipse given by the determinant on the covariance matrix between these two variables calculated from: (i) all the data, (ii) neutral loci only, and (iii) the MCD estimate. 
-
-{\bf TEAM: does this visualize that the robust points are neutral or is it unclear?
-
-TO DO: Need to add legend to this plot (neutral = grey, triangles = different strengths of selection, pink dots = robust points).  Replace "xtx" with $X^TX$ and rho with Spearman's $\rho$. Maybe change the colors so that neutral ellipse is black, and change the lines so that it works in BW.
-}
-}
- \label{fig:???}
-\end{figure}
-
-
-
-\newpage
-\begin{figure}[h]
-\begin{center}
-\includegraphics[width=4in]{../figures_man2/F4-DogPower_alpha075_title.pdf}
-\end{center}
-\caption[]{Comparison of power of different univariate and multivariate statistics to detect known QTL in the dog dataset. Power was evaluated as the proportion of known QTL with a signal above the maximum value of that statistic at the robust points identified by the MCD with $\alpha=0.75$. Multivariate "default" was calculated using all the data, while "MCD" was calculated using the MCD estimates of multivariate mean and covariance as well as the robust points in the calculation, if applicable.  Statistics evaluated include integrated haplotype score (iHS), H12, Tajima's D (Taj. D), nucleotide diversity ($\pi$), Mahalanobis distance (Md), harmonic mean distance (Hd), kernel deviance (Kd), and nearest neighbor distance (Nd). } 
+\caption[]{The difference in empirical power of the statistic to detect selection with and without the robust points identified by minimum covariance determinant (MCD) used in the calc ulation. Boxplots are summarized over all demographies.}
  \label{fig:???}
 \end{figure}
 
@@ -92,11 +73,32 @@ TO DO: Need to add legend to this plot (neutral = grey, triangles = different st
 \newpage
 \begin{figure}[h]
 \begin{center}
-\includegraphics[width=4in]{../figures_man2/F5-MalteseManhattan.pdf}
+\includegraphics[width=6in]{../figures_man2/F4-LandsharcSummary2.pdf}
 \end{center}
-\caption[]{Comparison of Manhattan plots for three univariate statistics (A) and the multivariate summary statistic of Mahalanobis distance (B). The points identified as robust in the MCD algorithm are highlighted in yellow. The vertical blue lines indicate the causal QTL that have risen to a frequency greater than 50\% in this breed, and the stars indicate whether that QTL is significantly greater than the threshold as described in the main text. The univariate statistics included in the multivariate calculation included integrated haplotype score (iHS), H12, Tajima's D, and nucleotide diversity ($\pi$, which is not plotted because it had no power to detect these QTL).} 
+\caption[]{Comparison of empirical power of the univariate statistics and compound measures evaluated from the demography simulations. The univariate statistics include Bayes factor (BF) and Spearman's $\rho$ (rho) from a genetic-environment association, a measure of genetic diffentation (XTX), $Z$-score from the program LFMM.
+The compound measures based on multivariate distances include: Mahalanobis distance (Md), harmonic mean distance (Hd), nearest neighbor distance (Nd), and hierarchical clustering (Hclust.Ward). The compound measures based on combining $P$-values include: decorrelated composite of multiple signals (DCMS), composite signal of selection (CSS), and Mahalanobis distance based on minus-log fractional $P$-values (Md-ranks).}
  \label{fig:???}
 \end{figure}
 
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[height=6in]{../figures_man2/F5-Dog_heatmap_LogP_compare_stats.pdf}
+\end{center}
+\caption[]{Heatmap of statistical quantile based on a minus-log $P$-value calculated from ranks evaluated for each individual locus in the empirical dog dataset. The univariate statistics include iHS, H12, nucleotide diversity $\pi$, and Tajima's $D$. The compound measures include: the Mahalanobis distance based on minus-log fractional $P$-values (Md-rank-$P$), the decorrelated composite of multiple signals (DCMS), the Mahalanobis distance based on the raw statistics, and the composite signal of selection (CSS). The row labels indicate the dog breed, chromosome, base pair of the focal SNP, and the allele frequency of the focal SNP.
+
+TO DO: EDIT X-AXIS LABELS}
+ \label{fig:???}
+\end{figure}
+
+
+\newpage
+\begin{figure}[h]
+\begin{center}
+\includegraphics[height=6in]{../figures_man2/F6-Dog_ScatterCompareSteepnessAndEmp_UniMulti.pdf}
+\end{center}
+\caption[]{Statistical quantile based on a minus-log $P$-value calculated from ranks is plotted against steepness for each individual locus. Loci in the upper right hand of the graph have a steeper signal of selection and a more significant signal. The univariate statistics are plotted in A-D, compared to the Md-rank-$P$ plotted in E.}
+ \label{fig:???}
+\end{figure}
 
 \end{document}

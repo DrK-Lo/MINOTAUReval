@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  26 AUG 2016 21:20
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  27 SEP 2016 15:29
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -509,6 +509,30 @@ LaTeX Warning: Label `fig:???' multiply defined.
 
 LaTeX Warning: Label `fig:???' multiply defined.
 
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
+
+LaTeX Warning: Label `fig:???' multiply defined.
+
 )
 \openout1 = `Lotterhos-MinotaurEvalSupplementFigs.aux'.
 
@@ -620,61 +644,194 @@ LaTeX Info: Redefining \nameref on input line 31.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
+<../figures_man2/S1-bivariate.pdf, id=4, 533.995pt x 525.965pt>
+File: ../figures_man2/S1-bivariate.pdf Graphic file (type pdf)
 
-<../figures_man2/S1-LandsharcCompareToNeutralCovMat.pdf, id=4, 361.35pt x 216.8
-1pt>
-File: ../figures_man2/S1-LandsharcCompareToNeutralCovMat.pdf Graphic file (type
- pdf)
- <use ../figures_man2/S1-LandsharcCompareToNeutralCovMat.pdf>
-Package pdftex.def Info: ../figures_man2/S1-LandsharcCompareToNeutralCovMat.pdf
- used on input line 50.
-(pdftex.def)             Requested size: 289.07999pt x 173.44823pt.
+<use ../figures_man2/S1-bivariate.pdf>
+Package pdftex.def Info: ../figures_man2/S1-bivariate.pdf used on input line 50
+.
+(pdftex.def)             Requested size: 433.62pt x 427.11276pt.
 
 
 LaTeX Font Warning: Font shape `OT1/cmss/m/sc' in size <12> not available
-(Font)              Font shape `OT1/cmr/m/sc' tried instead on input line 55.
+(Font)              Font shape `OT1/cmr/m/sc' tried instead on input line 52.
+
+
+<../figures_man2/S2-LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf, id=5, 36
+1.35pt x 505.89pt>
+File: ../figures_man2/S2-LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf Grap
+hic file (type pdf)
+
+<use ../figures_man2/S2-LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf>
+Package pdftex.def Info: ../figures_man2/S2-LandsharcComparetoNeutlocationscatt
+erPCSvsMCD.pdf used on input line 58.
+(pdftex.def)             Requested size: 289.07999pt x 404.71254pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
 
 [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <../fi
-gures_man2/S1-LandsharcCompareToNeutralCovMat.pdf>]
-<../figures_man2/S2-LandsharcProportionSelectedMCD.pdf, id=21, 361.35pt x 578.1
-6pt>
-File: ../figures_man2/S2-LandsharcProportionSelectedMCD.pdf Graphic file (type 
+gures_man2/S1-bivariate.pdf>]
+<../figures_man2/S3-LandsharcProportionSelectedMCD.pdf, id=5073, 361.35pt x 578
+.16pt>
+File: ../figures_man2/S3-LandsharcProportionSelectedMCD.pdf Graphic file (type 
 pdf)
- <use ../figures_man2/S2-LandsharcProportionSelectedMCD.pdf>
-Package pdftex.def Info: ../figures_man2/S2-LandsharcProportionSelectedMCD.pdf 
-used on input line 64.
+ <use ../figures_man2/S3-LandsharcProportionSelectedMCD.pdf>
+Package pdftex.def Info: ../figures_man2/S3-LandsharcProportionSelectedMCD.pdf 
+used on input line 70.
 (pdftex.def)             Requested size: 271.01184pt x 433.62pt.
- [2 <../figures_man2/S2-LandsharcProportionSelectedMCD.pdf>]
-<../figures_man2/S3-LandsharcFalsePositivesMCD.pdf, id=33, 216.81pt x 216.81pt>
-File: ../figures_man2/S3-LandsharcFalsePositivesMCD.pdf Graphic file (type pdf)
 
-<use ../figures_man2/S3-LandsharcFalsePositivesMCD.pdf>
-Package pdftex.def Info: ../figures_man2/S3-LandsharcFalsePositivesMCD.pdf used
- on input line 76.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S4-LandsharcComparePowerMCDminusPowerDefaultByDemog.pdf, id=50
+74, 289.08pt x 578.16pt>
+File: ../figures_man2/S4-LandsharcComparePowerMCDminusPowerDefaultByDemog.pdf G
+raphic file (type pdf)
+
+<use ../figures_man2/S4-LandsharcComparePowerMCDminusPowerDefaultByDemog.pdf>
+Package pdftex.def Info: ../figures_man2/S4-LandsharcComparePowerMCDminusPowerD
+efaultByDemog.pdf used on input line 79.
+(pdftex.def)             Requested size: 289.07999pt x 578.18504pt.
+
+
+LaTeX Warning: Float too large for page by 14.655pt on input line 83.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S5-LandsharcFalsePositivesMCD.pdf, id=5075, 216.81pt x 216.81p
+t>
+File: ../figures_man2/S5-LandsharcFalsePositivesMCD.pdf Graphic file (type pdf)
+
+ <use ../figures_man2/S5-LandsharcFalsePositivesMCD.pdf>
+Package pdftex.def Info: ../figures_man2/S5-LandsharcFalsePositivesMCD.pdf used
+ on input line 88.
 (pdftex.def)             Requested size: 289.07999pt x 289.11456pt.
- [3 <../figures_man2/S3-LandsharcFalsePositivesMCD.pdf>]
-<../figures_man2/S4-DogDataCompareLocationScatter.pdf, id=44, 361.35pt x 505.89
-pt>
-File: ../figures_man2/S4-DogDataCompareLocationScatter.pdf Graphic file (type p
-df)
- <use ../figures_man2/S4-DogDataCompareLocationScatter.pdf>
-Package pdftex.def Info: ../figures_man2/S4-DogDataCompareLocationScatter.pdf u
-sed on input line 85.
-(pdftex.def)             Requested size: 289.07999pt x 404.71254pt.
- [4 <../figures_man2/S4-DogDataCompareLocationScatter.pdf>]
-<../figures_man2/S5-DogPower_alpha099.pdf, id=56, 578.16pt x 289.08pt>
-File: ../figures_man2/S5-DogPower_alpha099.pdf Graphic file (type pdf)
 
-<use ../figures_man2/S5-DogPower_alpha099.pdf>
-Package pdftex.def Info: ../figures_man2/S5-DogPower_alpha099.pdf used on input
- line 94.
-(pdftex.def)             Requested size: 289.07999pt x 144.53964pt.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 101.
- [5 <../figures_man2/S5-DogPower_alpha099.pdf>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 101.
- (./Lotterhos-MinotaurEvalSupplementFigs.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 101.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 101.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S6-LandsharcAverageSignals.pdf, id=5076, 505.89pt x 650.43pt>
+File: ../figures_man2/S6-LandsharcAverageSignals.pdf Graphic file (type pdf)
+
+<use ../figures_man2/S6-LandsharcAverageSignals.pdf>
+Package pdftex.def Info: ../figures_man2/S6-LandsharcAverageSignals.pdf used on
+ input line 97.
+(pdftex.def)             Requested size: 433.62pt x 557.52281pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf, id=5077, 578
+.16pt x 433.62pt>
+File: ../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf Graphic 
+file (type pdf)
+
+<use ../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf>
+Package pdftex.def Info: ../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_Al
+lMulti.pdf used on input line 106.
+(pdftex.def)             Requested size: 433.62pt x 325.2142pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf, id=5078, 57
+8.16pt x 433.62pt>
+File: ../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf Graphic
+ file (type pdf)
+
+<use ../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf>
+Package pdftex.def Info: ../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_A
+llMulti.pdf used on input line 115.
+(pdftex.def)             Requested size: 433.62pt x 325.2142pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf, id=5079, 433.62pt x 722.7
+pt>
+File: ../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf Graphic file (type pd
+f)
+ <use ../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf>
+Package pdftex.def Info: ../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf us
+ed on input line 124.
+(pdftex.def)             Requested size: 260.17401pt x 433.62pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S10-Dog-CompareVarNd.pdf, id=5080, 337.47218pt x 368.67245pt>
+File: ../figures_man2/S10-Dog-CompareVarNd.pdf Graphic file (type pdf)
+
+<use ../figures_man2/S10-Dog-CompareVarNd.pdf>
+Package pdftex.def Info: ../figures_man2/S10-Dog-CompareVarNd.pdf used on input
+ line 133.
+(pdftex.def)             Requested size: 433.62pt x 473.71054pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S11-Dog_heatmap_steepness_compare_stats.pdf, id=5081, 578.16pt
+ x 867.24pt>
+File: ../figures_man2/S11-Dog_heatmap_steepness_compare_stats.pdf Graphic file 
+(type pdf)
+ <use ../figures_man2/S11-Dog_heatmap_steepness_compare_stats.pdf>
+Package pdftex.def Info: ../figures_man2/S11-Dog_heatmap_steepness_compare_stat
+s.pdf used on input line 142.
+(pdftex.def)             Requested size: 289.07928pt x 433.62pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+<../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf, id=5082, 578.16pt x 86
+7.24pt>
+File: ../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf Graphic file (type
+ pdf)
+ <use ../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf>
+Package pdftex.def Info: ../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf
+ used on input line 154.
+(pdftex.def)             Requested size: 289.07928pt x 433.62pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<../figures_man2/S13-CompareMdRankPandDCMS.pdf, id=5083, 433.62pt x 216.81pt>
+File: ../figures_man2/S13-CompareMdRankPandDCMS.pdf Graphic file (type pdf)
+
+<use ../figures_man2/S13-CompareMdRankPandDCMS.pdf>
+Package pdftex.def Info: ../figures_man2/S13-CompareMdRankPandDCMS.pdf used on 
+input line 166.
+(pdftex.def)             Requested size: 433.62pt x 216.81938pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 172.
+[2 <../figures_man2/S2-LandsharcComparetoNeutlocationscatterPCSvsMCD.pdf>]
+[3 <../figures_man2/S3-LandsharcProportionSelectedMCD.pdf>] [4 <../figures_man2
+/S4-LandsharcComparePowerMCDminusPowerDefaultByDemog.pdf>] [5 <../figures_man2/
+S5-LandsharcFalsePositivesMCD.pdf>] [6 <../figures_man2/S6-LandsharcAverageSign
+als.pdf>] [7 <../figures_man2/S7-Dog_ScatterCompareDistanceAndEmp_AllMulti.pdf>
+] [8 <../figures_man2/S8-Dog_ScatterCompareSteepnessAndEmp_AllMulti.pdf>]
+[9 <../figures_man2/S9-Dog_scatterCompareDefaultMCD.pdf>] [10 <../figures_man2/
+S10-Dog-CompareVarNd.pdf>] [11 <../figures_man2/S11-Dog_heatmap_steepness_compa
+re_stats.pdf>] [12 <../figures_man2/S12-Dog_heatmap_DIST_compare_stats.pdf>]
+[13 <../figures_man2/S13-CompareMdRankPandDCMS.pdf>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 172.
+
+(./Lotterhos-MinotaurEvalSupplementFigs.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 172.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 172.
 Package rerunfilecheck Info: File `Lotterhos-MinotaurEvalSupplementFigs.out' ha
 s not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
@@ -682,26 +839,26 @@ s not changed.
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 101.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 172.
  ) 
 Here is how much of TeX's memory you used:
- 9012 strings out of 493089
- 134528 string characters out of 6134842
- 220949 words of memory out of 5000000
- 12186 multiletter control sequences out of 15000+600000
- 12117 words of font info for 47 fonts, out of 8000000 for 9000
+ 9067 strings out of 493089
+ 136966 string characters out of 6134842
+ 229949 words of memory out of 5000000
+ 12217 multiletter control sequences out of 15000+600000
+ 11810 words of font info for 46 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 42i,6n,38p,848b,402s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 42i,6n,38p,676b,402s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb>
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></
 usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb>
-Output written on Lotterhos-MinotaurEvalSupplementFigs.pdf (5 pages, 91001 byte
-s).
+Output written on Lotterhos-MinotaurEvalSupplementFigs.pdf (13 pages, 1759773 b
+ytes).
 PDF statistics:
- 91 PDF objects out of 1000 (max. 8388607)
- 68 compressed objects within 1 object stream
- 11 named destinations out of 1000 (max. 500000)
- 26 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 5312 PDF objects out of 6186 (max. 8388607)
+ 2710 compressed objects within 28 object streams
+ 27 named destinations out of 1000 (max. 500000)
+ 66 words of extra memory for PDF output out of 10000 (max. 10000000)
 
